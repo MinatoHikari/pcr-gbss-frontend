@@ -56,6 +56,47 @@
               </div>
             </div>
           </q-card-section>
+          <q-separator />
+          <q-card-actions align="right">
+            <q-btn
+              color="blue-6"
+              to="/user/guild/records"
+              label="查看出刀统计"
+              icon="las la-clipboard-list"
+            ></q-btn>
+            <q-btn
+              v-if="user.job === 'master'"
+              label="重置Boss状态"
+              color="red"
+              icon="update"
+            >
+              <q-popup-proxy :offset="[0, 10]">
+                <q-banner>
+                  <template v-slot:avatar>
+                    <q-icon name="warning" color="red" />
+                  </template>
+                  <span>
+                    确认重置Boss状态吗？
+                  </span>
+                  <template v-slot:action>
+                    <q-toggle
+                      v-model="ifclearRecord"
+                      label="清空出刀记录"
+                      class="q-mr-md"
+                    />
+
+                    <q-btn color="red" label="取消" v-close-popup />
+                    <q-btn
+                      color="blue-6"
+                      label="确定"
+                      @click="resetBossStatus"
+                      v-close-popup="2"
+                    />
+                  </template>
+                </q-banner>
+              </q-popup-proxy>
+            </q-btn>
+          </q-card-actions>
         </q-card>
       </div>
       <div class="col-12">
@@ -69,6 +110,7 @@
                 color="pink-4"
                 icon="loop"
                 size="sm"
+                class="q-mr-sm"
                 @click="refreshBossStatus"
               >
                 <q-tooltip>
@@ -83,8 +125,14 @@
               <q-badge class="q-mr-sm" outline color="positive" label="HP" />
               <q-badge
                 outline
+                class="q-mr-sm"
                 color="pink-4"
                 :label="guild.bossNum + '号Boss'"
+              />
+              <q-badge
+                outline
+                color="purple-5"
+                :label="'倍率 x ' + guild.currentBossScoreX"
               />
             </div>
             <q-linear-progress
@@ -392,7 +440,14 @@
                           在 {{ item.round }} 周目对 {{ item.bossNum }} 号Boss
                           造成了 {{ item.damage }} 伤害
                         </span>
-                        <span class="q-mr-lg" v-if="index === 0">
+                        <span
+                          class="q-mr-lg"
+                          v-if="
+                            index === 0 &&
+                              (user.job === 'master' ||
+                                item.userName === user.name)
+                          "
+                        >
                           <q-btn color="red" label="撤销">
                             <q-popup-proxy :offset="[0, 10]">
                               <q-banner>
@@ -411,7 +466,7 @@
                                   <q-btn
                                     color="blue-6"
                                     label="确定"
-                                    @click="revert()"
+                                    @click="revert"
                                     v-close-popup="2"
                                   />
                                 </template>
@@ -540,7 +595,8 @@ export default {
           field: "actions",
           sortable: false
         }
-      ]
+      ],
+      ifclearRecord: false
     };
   },
   methods: {
@@ -769,6 +825,22 @@ export default {
           const arr = [].concat(this.battleRecords);
           arr.shift();
           this.$store.commit("user/updateBattleRecords", arr);
+        });
+      });
+    },
+    resetBossStatus() {
+      let url = `/api/user/battle/resetBossStatus`;
+      if (this.ifclearRecord) {
+        url = `/api/user/battle/resetBossStatus?clear=true`;
+      }
+      this.$axios.get(url).then(r => {
+        console.log(r);
+        this.ajaxCallback(r.data, this.resetBossStatus.bind(this), () => {
+          this.$store.commit("user/updateGuildStatus", r.data.guild);
+          this.$store.commit("user/updateUserStatus", r.data.user);
+          if (this.ifclearRecord) {
+            this.$store.commit("user/updateBattleRecords", []);
+          }
         });
       });
     }
