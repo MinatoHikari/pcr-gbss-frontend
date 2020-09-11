@@ -12,6 +12,10 @@ export default function() {
     userJoinApplications: [],
     userInviteApplications: [],
     userBattleOrders: [],
-    battleRecords: []
+    battleRecords: [],
+    battleRecordList: {
+      data: [],
+      pagination: {}
+    }
   };
 }

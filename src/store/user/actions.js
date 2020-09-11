@@ -53,7 +53,6 @@ const refreshToken = (request, redirect) => {
           axios.defaults.headers.common.Authorization = `Bearer ${LocalStorage.getItem(
             "JWT-token"
           )}`;
-          console.log(request);
           await request();
           break;
         case -1:
@@ -191,6 +190,7 @@ export function fetchGuildApplications({ commit, state }, redirect) {
   }
 }
 
+// config {user: Obj, redirect: from prefetch }
 export function fetchUserAplications({ commit, state }, config) {
   const req = axios
     .get(`/api/user/status/getUserApplications?user=${config.user.name}`, {
@@ -224,6 +224,7 @@ export function fetchUserAplications({ commit, state }, config) {
   return req;
 }
 
+// config {guildName: String, redirect: from prefetch }
 export function fetchMyBattleOrder({ commit, state }, redirect) {
   const req = axios
     .get(
@@ -240,6 +241,27 @@ export function fetchMyBattleOrder({ commit, state }, redirect) {
         fetchMyBattleOrder.bind(null, { commit, state }, redirect),
         () => {
           commit("updateUserBattleOrders", r.data.orders);
+        },
+        null,
+        redirect
+      );
+    });
+  return req;
+}
+
+export function fetchAllGuildRecords({ commit, state }, redirect) {
+  const req = axios
+    .get(`/api/user/battle/getBattleRecords?type=all`, {
+      headers: {
+        Authorization: `Bearer ${LocalStorage.getItem("JWT-token")}`
+      }
+    })
+    .then(r => {
+      ajaxCallback(
+        r.data,
+        fetchAllGuildRecords.bind(null, { commit, state }, redirect),
+        () => {
+          commit("updateBattleRecordList", r.data.battleRecords);
         },
         null,
         redirect

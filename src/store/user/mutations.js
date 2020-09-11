@@ -65,3 +65,9 @@ export function updateGuildHangUpMembers(state, members) {
 export function updateBattleRecords(state, records) {
   state.battleRecords = records;
 }
+
+// @param records type: array
+export function updateBattleRecordList(state, records) {
+  state.battleRecordList.data = records;
+  console.log(state);
+}
