@@ -47,6 +47,9 @@
               flat
               class="q-ml-sm"
             />
+            <q-btn flat color="pink-4" size="md" to="/auth/password-reset"
+              >忘记密码？</q-btn
+            >
           </div>
         </q-form>
       </div>

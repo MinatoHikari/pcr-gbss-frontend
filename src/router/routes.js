@@ -34,6 +34,10 @@ const routes = [{
           {
             path: "login",
             component: () => import("pages/Login.vue")
+          },
+          {
+            path: "password-reset",
+            component: () => import("pages/PasswordReset.vue")
           }
         ]
       },
