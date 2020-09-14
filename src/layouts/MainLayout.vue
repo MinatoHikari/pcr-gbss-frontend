@@ -16,6 +16,7 @@
 
       <q-tabs inline-label class="bg-pink-11" align="left">
         <q-route-tab
+          v-show="$route.path.indexOf('user') != -1"
           to="/user/guild/battle"
           label="公会战"
           icon="sports_cricket"
@@ -68,6 +69,12 @@ export default {
   created() {
     console.log(this.left);
     console.log(this.right);
+  },
+  watch: {
+    $route(to, from) {
+      console.log(to);
+      console.log(from);
+    }
   }
 };
 </script>

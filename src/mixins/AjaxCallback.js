@@ -20,10 +20,12 @@ export default {
       } else if (data.code === 2) {
         this.refreshToken(request);
       } else {
-        this.$q.notify({
-          type: "negative",
-          message: data.message
-        });
+        if ("message" in data) {
+          this.$q.notify({
+            type: "negative",
+            message: data.message
+          });
+        }
         if (error) {
           error();
         }
