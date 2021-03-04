@@ -20,8 +20,8 @@
                     hint="请输入需要找回密码的账号邮箱"
                     lazy-rules
                     :rules="[
-            val => $v.email.required || '请勿留空',
-            val => $v.email.email || '请输入合法邮箱'
+            val => v$.email.required || '请勿留空',
+            val => v$.email.email || '请输入合法邮箱'
           ]"
                 />
                 <q-input
@@ -36,8 +36,8 @@
                     hint="请输入图中的验证码，验证通过后才可获取邮件验证码"
                     lazy-rules
                     :rules="[
-            val => $v.captchaDigital.required || '请勿留空',
-            val => $v.captchaDigital.minLength || '请输入六位验证码'
+            val => cv$.captchaDigital.required || '请勿留空',
+            val => cv$.captchaDigital.minLength || '请输入六位验证码'
           ]"
                 />
                 <q-img
@@ -54,7 +54,7 @@
                     class="q-mt-md full-width"
                     color="pink-4"
                     @click="sendPasswordResetMail"
-                    :disable="disableSendPasswordResetMail"
+                    :disable="disableSendMail"
                 >
                     <q-inner-loading :showing="emailBtnLoading">
                         <q-spinner-gears size="25px" color="primary"/>
@@ -85,8 +85,8 @@
                         hint="请输入重置邮件中的验证码"
                         lazy-rules
                         :rules="[
-              val => $v.mailVerifyNumber.required || '请勿留空',
-              val => $v.mailVerifyNumber.minLength || '请输入七位验证码'
+              val => v$.mailVerifyNumber.required || '请勿留空',
+              val => v$.mailVerifyNumber.minLength || '请输入七位验证码'
             ]"
                     />
                     <q-input
@@ -97,7 +97,7 @@
                         label="密码 *"
                         hint="请输入新的账号密码"
                         lazy-rules
-                        :rules="[val => $v.password.required || '请勿留空']"
+                        :rules="[val => v$.password.required || '请勿留空']"
                     >
                         <template v-slot:append>
                             <q-icon
@@ -117,8 +117,8 @@
                         hint="请再次输入新的账号密码"
                         lazy-rules
                         :rules="[
-              val => $v.passwordAgain.required || '请勿留空',
-              val => $v.passwordAgain.sameAsPassword || '两次输入的密码不一致'
+              val => v$.passwordAgain.required || '请勿留空',
+              val => v$.passwordAgain.sameAsPassword || '两次输入的密码不一致'
             ]"
                     >
                         <template v-slot:append>
@@ -146,169 +146,142 @@
     </q-page>
 </template>
 
-<script>
-import { required, email, minLength, sameAs } from "vuelidate/lib/validators";
-import ajaxCallbackFunc from "../mixins/AjaxCallback";
+<script lang="ts">
+import { required, email as emailRule, minLength, sameAs } from '@vuelidate/validators';
+import useRequests from '../compositions/useRequest';
+import useCaptcha from 'src/compositions/useCaptcha';
+import { defineComponent, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
+import { useVuelidate } from '@vuelidate/core';
+import { authRequests } from 'src/requests/auth';
 
-export default {
-    name: "PasswordReset",
-    mixins: [ajaxCallbackFunc],
-    data() {
-        return {
-            email: "",
-            captchaDigital: "",
-            disableSendPasswordResetMail: true,
-            emailBtnLoading: false,
-            captcha: {
-                ID: "",
-                img: "",
-                captchaLoadingState: false,
-                validated: false
-            },
-            step: "email",
-            mailVerifyNumber: "",
-            password: "",
-            passwordAgain: "",
-            // 密码可见
-            seePwd: true,
-            seePwda: true
-        };
-    },
-    watch: {
-        captchaDigital(val) {
-            if (this.$refs.captchaDigital.validate()) {
-                this.$axios
-                    .post("/api/public/verifyCaptcha", {
-                        ID: this.captcha.ID,
-                        digitalStr: val
-                    })
-                    .then(r => {
-                        console.log(r);
-                        this.ajaxCallback(
-                            r.data,
-                            null,
-                            () => {
-                                this.captcha.captchaLoadingState = false;
-                                this.captcha.validated = true;
-                                this.disableSendPasswordResetMail = false;
-                            },
-                            () => {
-                                this.captcha.captchaLoadingState = false;
-                            }
-                        );
-                    });
-            }
-        },
-        step(val) {
-            if (!this.captcha.validated) {
-                this.step = "email";
+export default defineComponent({
+    name: 'PasswordReset',
+    setup() {
+        const { ajaxCallback } = useRequests()
+        const router = useRouter()
+        const $q = useQuasar()
+        const { captcha, captchaDigital, cv$, refreshCaptcha, disableSendMail } = useCaptcha()
+
+        const email = ref('')
+        const emailBtnLoading = ref(false)
+        const step = ref('email');
+        const mailVerifyNumber = ref('');
+        const password = ref('');
+        const passwordAgain = ref('');
+        // 密码可见
+        const seePwd = ref(true);
+        const seePwda = ref(true);
+
+        const rules = {
+            email: { required, emailRule },
+            password: { required },
+            passwordAgain: { required, sameAsPassword: sameAs('password') },
+            mailVerifyNumber: {
+                required,
+                minLength: minLength(7)
             }
         }
-    },
-    validations: {
-        email: {
-            required,
-            email
-        },
-        captchaDigital: {
-            required,
-            minLength: minLength(6)
-        },
-        mailVerifyNumber: {
-            required,
-            minLength: minLength(7)
-        },
-        password: {
-            required
-        },
-        passwordAgain: {
-            required,
-            sameAsPassword: sameAs("password")
-        }
-    },
-    created() {
-        this.$axios.get("/api/public/getCaptcha").then(r => {
-            this.captcha.ID = r.data.captcha.ID;
-            this.captcha.img = r.data.captcha.img;
-        });
-    },
-    methods: {
-        sendPasswordResetMail() {
-            this.disableSendPasswordResetMail = true;
-            this.emailBtnLoading = true;
-            if (!this.$refs.email.validate()) {
-                this.disableSendPasswordResetMail = false;
-                this.emailBtnLoading = false;
+
+        const v$ = useVuelidate(rules, { email, mailVerifyNumber, password, passwordAgain });
+
+        const sendPasswordResetMail = async () => {
+            disableSendMail.value = true;
+            emailBtnLoading.value = true;
+            if (v$.value.email.$invalid) {
+                disableSendMail.value = false;
+                emailBtnLoading.value = false;
                 return;
             }
-            if (this.captcha.validated) {
-                this.$axios
-                    .get(`/api/user/sendPasswordResetMail?email=${this.email}`)
-                    .then(r => {
-                        console.log(r);
-                        this.ajaxCallback(
-                            r.data,
-                            null,
-                            () => {
-                                this.step = "reset";
-                                this.emailBtnLoading = false;
-                            },
-                            () => {
-                                this.emailBtnLoading = false;
-                            }
-                        );
-                    });
-                this.captcha.validated = false;
-            } else {
-                this.$q.notify({
-                    type: "negative",
-                    message: "验证状态失效，请重新验证图片验证码"
-                });
-                this.disableSendPasswordResetMail = false;
-                this.emailBtnLoading = false;
-            }
-        },
-        refreshCaptcha() {
-            this.$axios
-                .get(`/api/public/refreshCaptcha?id=${this.captcha.ID}`)
-                .then(r => {
-                    this.ajaxCallback(r.data, null, () => {
-                        this.captcha.ID = r.data.captcha.ID;
-                        this.captcha.img = r.data.captcha.img;
-                    });
-                    this.captcha.validated = false;
-                });
-        },
-        resetPassword() {
-            this.$axios
-                .post("/api/user/resetPassword", {
-                    email: this.email,
-                    password: this.password,
-                    passwordAgain: this.passwordAgain,
-                    emailVerifyNumber: this.mailVerifyNumber
-                })
-                .then(r => {
-                    console.log(r);
-                    this.ajaxCallback(
-                        r.data,
+            if (captcha.value.validated) {
+                const { res, err } = await authRequests.sendPasswordResetMail(email.value)
+                if (err) console.log(err)
+                if (res) {
+                    ajaxCallback(
+                        res.data,
                         null,
                         () => {
-                            this.$router.replace("/auth/login");
+                            step.value = 'reset';
+                            emailBtnLoading.value = false;
                         },
                         () => {
-                            this.step = "email";
-                            this.password = "";
-                            this.passwordAgain = "";
-                            this.mailVerifyNumber = "";
+                            emailBtnLoading.value = false;
                         }
-                    );
+                    ).catch((err) => {
+                        console.log(err)
+                    });
+                }
+            } else {
+                $q.notify({
+                    type: 'negative',
+                    message: '验证状态失效，请重新验证图片验证码'
                 });
-        },
-        onFormReset() {
-            this.password = "";
-            this.passwordAgain = "";
-            this.mailVerifyNumber = "";
+                disableSendMail.value = false;
+                emailBtnLoading.value = false;
+            }
+        }
+
+        const resetPassword = async () => {
+            const { res, err } = await authRequests.resetPassword({
+                email: email.value,
+                emailVerifyNumber: mailVerifyNumber.value,
+                password: password.value,
+                passwordAgain: passwordAgain.value
+            })
+            if (err) console.log(err)
+            if (res) {
+                ajaxCallback(
+                    res.data,
+                    null,
+                    () => {
+                        router.replace('/auth/login').catch((err) => {
+                            console.log(err)
+                        });
+                    },
+                    () => {
+                        this.step = 'email';
+                        this.password = '';
+                        this.passwordAgain = '';
+                        this.mailVerifyNumber = '';
+                    }
+                ).catch((err) => {
+                    console.log(err)
+                });
+            }
+        }
+
+        watch(step, () => {
+            if (!captcha.value.validated) {
+                step.value = 'email';
+            }
+        })
+
+        const onFormReset = () => {
+            password.value = '';
+            passwordAgain.value = '';
+            mailVerifyNumber.value = '';
+        }
+
+        return {
+            v$,
+            cv$,
+            email,
+            captchaDigital,
+            disableSendMail,
+            emailBtnLoading,
+            captcha,
+            step,
+            mailVerifyNumber,
+            password,
+            passwordAgain,
+            seePwd,
+            seePwda,
+            refreshCaptcha,
+            onFormReset,
+            resetPassword,
+            sendPasswordResetMail
         }
     }
-};
+});
 </script>

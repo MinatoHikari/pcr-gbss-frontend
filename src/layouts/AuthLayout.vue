@@ -1,18 +1,19 @@
 <template>
-  <q-page>
-    <router-view />
-  </q-page>
+    <q-page>
+        <router-view/>
+    </q-page>
 </template>
 
-<script>
-import { LocalStorage } from "quasar";
+<script lang="ts">
+import { LocalStorage } from 'quasar';
+import { defineComponent } from 'vue';
 
-export default {
-  name: "Auth",
-  preFetch({ store, currentRoute, previousRoute, redirect, ssrContext }) {
-    if (LocalStorage.has('JWT-token')) {
-      redirect('/user')
+export default defineComponent({
+    name: 'Auth',
+    beforeRouteEnter(to, from, next) {
+        if (LocalStorage.has('JWT-token')) {
+            next('/user')
+        }
     }
-  }
-};
+});
 </script>

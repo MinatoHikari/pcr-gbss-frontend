@@ -21,21 +21,21 @@
                                 label="邮箱 *"
                                 hint="系统登录凭证，请勿使用临时邮箱"
                                 lazy-rules
-                                :rules="[val => $v.email.required || '请勿留空', val => $v.email.email || '请输入合法邮箱']"/>
+                                :rules="[val => v$.email.required || '请勿留空', val => v$.email.email || '请输入合法邮箱']"/>
                             <q-input
                                 outlined
                                 v-model.trim="name"
                                 label="PCR账号名 *"
                                 hint="注册后可自由修改"
                                 lazy-rules
-                                :rules="[val => $v.name.required || '请勿留空']"/>
+                                :rules="[val => v$.name.required || '请勿留空']"/>
                             <q-input
                                 outlined
                                 v-model.trim="password"
                                 :type="seePwd ? 'password' : 'text'"
                                 label="密码 *"
                                 lazy-rules
-                                :rules="[val => $v.password.required || '请勿留空']"
+                                :rules="[val => v$.password.required || '请勿留空']"
                             >
                                 <template v-slot:append>
                                     <q-icon
@@ -52,8 +52,8 @@
                                 :type="seePwda ? 'password' : 'text'"
                                 label="再次输入密码 *"
                                 lazy-rules
-                                :rules="[val => $v.passwordAgain.required || '请勿留空',
-                                val => $v.passwordAgain.sameAsPassword || '两次输入的密码不一致']"
+                                :rules="[val => v$.passwordAgain.required || '请勿留空',
+                                val => v$.passwordAgain.sameAsPassword || '两次输入的密码不一致']"
                             >
                                 <template v-slot:append>
                                     <q-icon
@@ -75,8 +75,8 @@
                                 label="验证码"
                                 hint="请输入图中的验证码，验证通过后才可获取邮件验证码"
                                 lazy-rules
-                                :rules="[ val => $v.captchaDigital.required || '请勿留空',
-                                val => $v.captchaDigital.minLength || '请输入六位验证码' ]"/>
+                                :rules="[ val => cv$.captchaDigital.required || '请勿留空',
+                                val => cv$.captchaDigital.minLength || '请输入六位验证码' ]"/>
                             <div class="q-mt-md">
                                 <q-img
                                     :src="captcha.img"
@@ -96,7 +96,7 @@
                                     class="q-mt-md full-width"
                                     color="pink-4"
                                     @click="sendAddressVerifyMail"
-                                    :disable="disableSendAddressVerifyMail"
+                                    :disable="disableSendMail"
                                 >
                                     <q-inner-loading :showing="emailBtnLoading">
                                         <q-spinner-gears size="25px" color="primary"/>
@@ -111,8 +111,8 @@
                                 label="邮件验证码 *"
                                 hint="请输入7位邮件验证码"
                                 lazy-rules
-                                :rules="[val => $v.name.required || '请勿留空',
-                                val => $v.captchaDigital.minLength || '请输入六位验证码']"/>
+                                :rules="[val => v$.name.required || '请勿留空',
+                                val => v$.captchaDigital.minLength || '请输入六位验证码']"/>
                             <q-toggle v-model="accept" label="我同意使用条款和用户协议"/>
                             <div>
                                 <q-btn label="注册" type="submit" color="primary"/>
@@ -135,172 +135,148 @@
     </q-page>
 </template>
 
-<script>
-import { required, email, sameAs, minLength } from "vuelidate/lib/validators";
-import ajaxCallbackFunc from "../mixins/AjaxCallback";
+<script lang="ts">
+import { required, email as emailRule, sameAs, minLength } from '@vuelidate/validators';
+import useRequests from '../compositions/useRequest';
+import { defineComponent, ref } from 'vue';
+import { authRequests } from 'src/requests/auth';
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar';
+import { useVuelidate } from '@vuelidate/core'
+import useCaptcha from 'src/compositions/useCaptcha';
 
-export default {
-    name: "Register",
-    mixins: [ajaxCallbackFunc],
-    data() {
-        return {
-            email: null,
-            name: null,
-            password: null,
-            seePwd: true,
-            passwordAgain: null,
-            seePwda: true,
-            emailVerifyNumber: "",
-            accept: false,
-            captcha: {
-                ID: "",
-                img: "",
-                captchaLoadingState: false,
-                validated: false
-            },
-            captchaDigital: "",
-            disableSendAddressVerifyMail: true,
-            emailBtnLoading: false
-        };
-    },
-    watch: {
-        captchaDigital(val) {
-            if (this.$refs.captchaDigital.validate()) {
-                this.$axios
-                    .post("/api/public/verifyCaptcha", {
-                        ID: this.captcha.ID,
-                        digitalStr: val
-                    })
-                    .then(r => {
-                        console.log(r);
-                        this.ajaxCallback(
-                            r.data,
-                            null,
-                            () => {
-                                this.captcha.captchaLoadingState = false;
-                                this.captcha.validated = true;
-                                this.disableSendAddressVerifyMail = false;
-                            },
-                            () => {
-                                this.captcha.captchaLoadingState = false;
-                            }
-                        );
-                    });
+export default defineComponent({
+    name: 'Register',
+    setup() {
+        const { ajaxCallback } = useRequests()
+        const router = useRouter()
+        const $q = useQuasar()
+
+        const email = ref('')
+        const name = ref('')
+        const password = ref('')
+        const seePwd = ref(true)
+        const passwordAgain = ref('')
+        const seePwda = ref(true)
+        const emailVerifyNumber = ref('')
+        const accept = ref(false)
+        const emailBtnLoading = ref(false);
+        const { captcha, captchaDigital, cv$, refreshCaptcha, disableSendMail } = useCaptcha()
+
+        const rules = {
+            email: { required, emailRule },
+            name: { required },
+            password: { required },
+            passwordAgain: { required, sameAsPassword: sameAs('password') },
+            captchaDigital: {
+                required,
+                minLength: minLength(6)
             }
         }
-    },
-    validations: {
-        email: {
-            required,
-            email
-        },
-        name: {
-            required
-        },
-        password: {
-            required
-        },
-        passwordAgain: {
-            required,
-            sameAsPassword: sameAs("password")
-        },
-        captchaDigital: {
-            required,
-            minLength: minLength(6)
+
+        const v$ = useVuelidate(rules, { email, name, password, passwordAgain })
+
+        const onReset = () => {
+            email.value = '';
+            name.value = '';
+            password.value = '';
+            passwordAgain.value = '';
+            accept.value = false;
         }
-    },
-    created() {
-        this.$axios.get("/api/public/getCaptcha").then(r => {
-            this.captcha.ID = r.data.captcha.ID;
-            this.captcha.img = r.data.captcha.img;
-        });
-    },
-    methods: {
-        onSubmit() {
-            if (this.accept !== true) {
-                this.$q.notify({
-                    color: "red-5",
-                    textColor: "white",
-                    icon: "warning",
-                    message: "You need to accept the license and terms first"
+
+        const register = async () => {
+            const { res, err } = await authRequests.register({
+                email: email.value,
+                password: password.value,
+                passwordAgain: passwordAgain.value,
+                name: name.value,
+                verifyNumber: emailVerifyNumber.value
+            })
+            if (err) console.log(err)
+            if (res) {
+                ajaxCallback(res.data, null, async () => {
+                    await router.push('login')
+                }).catch((err) => {
+                    console.log(err)
+                });
+            }
+        }
+
+        const onSubmit = async () => {
+            if (accept.value !== true) {
+                $q.notify({
+                    color: 'red-5',
+                    textColor: 'white',
+                    icon: 'warning',
+                    message: 'You need to accept the license and terms first'
                 });
             } else {
-                this.$q.notify({
-                    color: "green-4",
-                    textColor: "white",
-                    icon: "cloud_done",
-                    message: "Submitted"
+                $q.notify({
+                    color: 'green-4',
+                    textColor: 'white',
+                    icon: 'cloud_done',
+                    message: 'Submitted'
                 });
-                this.register();
+                await register();
             }
-        },
-        onReset() {
-            this.email = null;
-            this.name = null;
-            this.password = null;
-            this.passwordAgain = null;
-            this.accept = false;
-        },
-        register() {
-            this.$axios
-                .post("/api/user/register", {
-                    email: this.email,
-                    name: this.name,
-                    password: this.password,
-                    passwordAgain: this.passwordAgain,
-                    verifyNumber: this.emailVerifyNumber
-                })
-                .then(r => {
-                    console.log(r);
-                    this.ajaxCallback(r.data, null, () => {
-                        this.$router.push("login");
-                    });
-                });
-        },
-        refreshCaptcha() {
-            this.$axios
-                .get(`/api/public/refreshCaptcha?id=${ this.captcha.ID }`)
-                .then(r => {
-                    this.ajaxCallback(r.data, null, () => {
-                        this.captcha.ID = r.data.captcha.ID;
-                        this.captcha.img = r.data.captcha.img;
-                    });
-                    this.captcha.validated = false;
-                });
-        },
-        sendAddressVerifyMail() {
-            this.disableSendAddressVerifyMail = true;
-            this.emailBtnLoading = true;
-            if (!this.$refs.register.validate()) {
-                this.disableSendAddressVerifyMail = false;
-                this.emailBtnLoading = false;
+        }
+
+        const sendAddressVerifyMail = async () => {
+            disableSendMail.value = true;
+            emailBtnLoading.value = true;
+            if (v$.value.email.$invalid) {
+                disableSendMail.value = false;
+                emailBtnLoading.value = false;
                 return;
             }
-            if (this.captcha.validated) {
-                this.$axios
-                    .get(`/api/user/sendRegisterVerifyEmail?email=${ this.email }`)
-                    .then(r => {
-                        console.log(r);
-                        this.ajaxCallback(
-                            r.data,
-                            null,
-                            () => {
-                                this.emailBtnLoading = false;
-                            },
-                            () => {
-                                this.emailBtnLoading = false;
-                            }
-                        );
+            if (captcha.value.validated) {
+                const { res, err } = await authRequests.sendAddressVerifyMail(email.value)
+                captcha.value.validated = false;
+                if (err) console.log(err)
+                if (res) {
+                    ajaxCallback(
+                        res.data,
+                        null,
+                        () => {
+                            emailBtnLoading.value = false;
+                        },
+                        () => {
+                            emailBtnLoading.value = false;
+                        }
+                    ).catch((err) => {
+                        console.log(err)
                     });
-                this.captcha.validated = false;
+                }
             } else {
-                this.$q.notify({
-                    type: "negative",
-                    message: "验证状态失效，请重新验证图片验证码"
+                $q.notify({
+                    type: 'negative',
+                    message: '验证状态失效，请重新验证图片验证码'
                 });
-                this.emailBtnLoading = false;
+                emailBtnLoading.value = false;
             }
         }
+
+        return {
+            email,
+            name,
+            password,
+            seePwd,
+            passwordAgain,
+            seePwda,
+            emailVerifyNumber,
+            accept,
+            captcha,
+            captchaDigital,
+            disableSendMail,
+            emailBtnLoading,
+            onReset,
+            register,
+            onSubmit,
+            refreshCaptcha,
+            sendAddressVerifyMail,
+            v$,
+            cv$
+        }
     }
-};
+});
 </script>

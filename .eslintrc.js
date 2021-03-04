@@ -1,3 +1,5 @@
+const { resolve } = require('path');
+
 module.exports = {
     // https://eslint.org/docs/user-guide/configuring#configuration-cascading-and-hierarchy
     // This option interrupts the configuration hierarchy at this file
@@ -5,7 +7,11 @@ module.exports = {
     root: true,
 
     parserOptions: {
-        parser: 'babel-eslint',
+        extraFileExtensions: ['.vue'],
+        // parser: 'babel-eslint',
+        parser: '@typescript-eslint/parser',
+        project: resolve(__dirname, './tsconfig.json'),
+        tsconfigRootDir: __dirname,
         ecmaVersion: 2018, // Allows for the parsing of modern ECMAScript features
         sourceType: 'module' // Allows for the use of imports
     },
@@ -17,12 +23,15 @@ module.exports = {
     // Rules order is important, please avoid shuffling them
     extends: [
         // Base ESLint recommended rules
-        // 'eslint:recommended',
-
+        'eslint:recommended',
+        'plugin:@typescript-eslint/eslint-recommended',
+        'plugin:@typescript-eslint/recommended',
+        // consider disabling this class of rules if linting takes too long
+        'plugin:@typescript-eslint/recommended-requiring-type-checking',
         // Uncomment any of the lines below to choose desired strictness,
         // but leave only one uncommented!
         // See https://eslint.vuejs.org/rules/#available-rules
-        'plugin:vue/essential', // Priority A: Essential (Error Prevention)
+        'plugin:vue/vue3-essential', // Priority A: Essential (Error Prevention)
         // 'plugin:vue/strongly-recommended', // Priority B: Strongly Recommended (Improving Readability)
         // 'plugin:vue/recommended', // Priority C: Recommended (Minimizing Arbitrary Choices and Cognitive Overhead)
 
@@ -31,10 +40,10 @@ module.exports = {
     ],
 
     plugins: [
+        '@typescript-eslint',
         // https://eslint.vuejs.org/user-guide/#why-doesn-t-it-work-on-vue-file
         // required to lint *.vue files
-        'vue',
-
+        'vue'
     ],
 
     globals: {
@@ -53,7 +62,7 @@ module.exports = {
         // allow paren-less arrow functions
         'arrow-parens': 'off',
         'one-var': 'off',
-        'quotes': 'off',
+        quotes: ['warn', 'single'],
         'import/first': 'off',
         'import/named': 'error',
         'import/namespace': 'error',
@@ -64,10 +73,15 @@ module.exports = {
         'import/no-extraneous-dependencies': 'off',
         'prefer-promise-reject-errors': 'off',
         'space-before-function-paren': 'off',
-        'semi': 'off',
-        'indent': 'off',
+        semi: 'off',
+        indent: 'off',
         'no-trailing-spaces': 'off',
-        'template-curly-spacing': "off",
+        'template-curly-spacing': 'off',
+        '@typescript-eslint/explicit-function-return-type': 'off',
+        '@typescript-eslint/explicit-module-boundary-types': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
 
         // allow debugger during development only
         'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'

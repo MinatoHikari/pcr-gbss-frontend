@@ -24,16 +24,23 @@
     </q-page>
 </template>
 
-<script>
-export default {
-    name: "PageIndex"
-};
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
+    name: 'PageIndex'
+});
 </script>
 
-<style lang="stylus">
-.auth-btn
-    width 100%
+<style>
+.auth-btn {
+    width: 100%;
+}
 
-.btn-back
-    top 0 right 0 z-index 1
+.btn-back {
+    top: 0;
+    right: 0;
+    z-index: 1;
+}
+
 </style>

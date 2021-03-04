@@ -1,14 +1,16 @@
 <template>
-  <q-page>
-    <router-view />
-  </q-page>
+    <q-page>
+        <router-view/>
+    </q-page>
 </template>
 
-<script>
-export default {
-  name: "Guild",
-  preFetch({ store, currentRoute, previousRoute, redirect, ssrContext }) {
-    return store.dispatch("user/fetchMyGuild", redirect);
-  }
-};
+<script lang="ts">
+import { defineComponent } from 'vue';
+
+export default defineComponent({
+    name: 'Guild',
+    preFetch({ store, redirect }) {
+        return store.dispatch('user/fetchMyGuild', redirect);
+    }
+});
 </script>

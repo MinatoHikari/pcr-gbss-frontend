@@ -1,171 +1,185 @@
 <template>
-  <q-page padding>
-    <div class="row q-col-gutter-md">
-      <div class="col-12">
-        <q-table :data="joinData" :columns="columns" row-key="name">
-          <template v-slot:top="props">
-            <div class="text-h6 row items-center" :data-props="props">
-              <q-icon class="q-mr-sm" size="md" name="mail_outline"></q-icon>
-              申请一览
+    <q-page padding>
+        <div class="row q-col-gutter-md">
+            <div class="col-12">
+                <q-table :data="joinData" :columns="columns" row-key="name">
+                    <template v-slot:top="props">
+                        <div class="text-h6 row items-center" :data-props="props">
+                            <q-icon class="q-mr-sm" size="md" name="mail_outline"></q-icon>
+                            申请一览
+                        </div>
+                    </template>
+                    <template v-slot:body-cell-actions="props">
+                        <q-td key="actions" :props="props">
+                            <q-btn
+                                v-if="user.job === 'master'"
+                                color="positive"
+                                :disable="props.row.job === 'master'"
+                                @click="accept(props.row)"
+                            >
+                                同意
+                            </q-btn>
+                            <q-btn
+                                class="q-ml-xs"
+                                v-if="user.job === 'master'"
+                                color="red"
+                                :disable="props.row.job === 'master'"
+                                @click="reject(props)"
+                            >
+                                拒绝
+                            </q-btn>
+                        </q-td>
+                    </template>
+                </q-table>
             </div>
-          </template>
-          <template v-slot:body-cell-actions="props">
-            <q-td key="actions" :props="props">
-              <q-btn
-                v-if="user.job === 'master'"
-                color="positive"
-                :disable="props.row.job === 'master'"
-                @click="accept(props)"
-              >
-                同意
-              </q-btn>
-              <q-btn
-                class="q-ml-xs"
-                v-if="user.job === 'master'"
-                color="red"
-                :disable="props.row.job === 'master'"
-                @click="reject(props)"
-              >
-                拒绝
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
-      </div>
-      <div class="col-12">
-        <q-table :data="inviteData" :columns="columns" row-key="name">
-          <template v-slot:top="props">
-            <div class="text-h6 row items-center" :data-props="props">
-              <q-icon
-                class="q-mr-sm"
-                size="md"
-                name="forward_to_inbox"
-              ></q-icon>
-              邀请一览
+            <div class="col-12">
+                <q-table :data="inviteData" :columns="columns" row-key="name">
+                    <template v-slot:top="props">
+                        <div class="text-h6 row items-center" :data-props="props">
+                            <q-icon
+                                class="q-mr-sm"
+                                size="md"
+                                name="forward_to_inbox"
+                            ></q-icon>
+                            邀请一览
+                        </div>
+                    </template>
+                    <template v-slot:body-cell-actions="props">
+                        <q-td key="actions" :props="props">
+                            <q-btn
+                                class="q-ml-xs"
+                                v-if="user.job === 'master'"
+                                color="red"
+                                :disable="props.row.job === 'master'"
+                                @click="reject(props)"
+                            >
+                                撤回
+                            </q-btn>
+                        </q-td>
+                    </template>
+                </q-table>
             </div>
-          </template>
-          <template v-slot:body-cell-actions="props">
-            <q-td key="actions" :props="props">
-              <q-btn
-                class="q-ml-xs"
-                v-if="user.job === 'master'"
-                color="red"
-                :disable="props.row.job === 'master'"
-                @click="reject(props)"
-              >
-                撤回
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
-      </div>
-    </div>
-  </q-page>
+        </div>
+    </q-page>
 </template>
 
-<script>
-import ajaxCallbackFunc from "../../../mixins/AjaxCallback";
-// import { extend } from "quasar";
+<script lang="ts">
+import useRequests from '../../../compositions/useRequest';
+import { defineComponent, computed } from 'vue';
+import { useStore } from 'src/store';
+import { LooseDictionary } from 'quasar'
+import { guildRequests } from 'src/requests/guild';
 
-export default {
-  name: "Guild-members",
-  mixins: [ajaxCallbackFunc],
-  preFetch({ store, currentRoute, previousRoute, redirect, ssrContext }) {
-    return store.dispatch("user/fetchGuildApplications", redirect);
-  },
-  computed: {
-    joinData() {
-      return this.$store.state.user.guildJoinApplications;
+interface Row {
+    userName: string
+    ID: string
+    guild: string
+    createdAt: string
+    type: string
+}
+
+export default defineComponent({
+    name: 'Guild-members',
+    preFetch({ store, redirect }) {
+        return store.dispatch('user/fetchGuildApplications', redirect);
     },
-    inviteData() {
-      return this.$store.state.user.guildInviteApplications;
-    },
-    user() {
-      return this.$store.state.user.user;
-    }
-  },
-  data() {
-    return {
-      confirm: false,
-      currentConfirmProps: "",
-      columns: [
-        {
-          name: "userName",
-          required: true,
-          label: "账号名称",
-          align: "left",
-          field: row => row.userName,
-          format: val => `${val}`,
-          sortable: true
-        },
-        {
-          name: "ID",
-          align: "center",
-          label: "申请ID",
-          field: "ID",
-          sortable: true
-        },
-        {
-          name: "guild",
-          label: "申请公会",
-          field: "guild"
-        },
-        {
-          name: "createdAt",
-          label: "申请时间",
-          field: "createdAt"
-        },
-        {
-          name: "actions",
-          label: "操作",
-          field: "actions",
-          sortable: false
-        }
-      ]
-    };
-  },
-  methods: {
-    reject(props) {
-      this.$axios
-        .post("/api/user/guild/reject", {
-          userName: props.row.userName,
-          guild: props.row.guild,
-          type: props.row.type
-        })
-        .then(r => {
-          this.ajaxCallback(r.data, this.reject.bind(this, props), () => {
-            let arr = [];
-            let url = "user/";
-            if (props.row.type === "join") {
-              arr = arr.concat(this.joinData);
-              url = url + "updateGuildJoinApplications";
-            } else {
-              arr = arr.concat(this.inviteData);
-              url = url + "updateGuildInviteApplications";
+    setup(prop, context) {
+        console.log(prop)
+        console.log(context)
+        const { ajaxCallback } = useRequests()
+        const store = useStore()
+
+        const joinData = computed(() => store.state.user.guildJoinApplications)
+        const inviteData = computed(() => store.state.user.guildInviteApplications)
+        const user = computed(() => store.state.user.user)
+
+        const reject = async (instanceProps: LooseDictionary) => {
+            const row = instanceProps.row as Row
+            const { res, err } = await guildRequests.rejectApply(row.userName, row.guild, row.type);
+            if (err) console.log(err)
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    let arr: any[] = [];
+                    let url = 'user/';
+                    if (row.type === 'join') {
+                        arr = arr.concat(joinData.value);
+                        url = url + 'updateGuildJoinApplications';
+                    } else {
+                        arr = arr.concat(inviteData.value);
+                        url = url + 'updateGuildInviteApplications';
+                    }
+                    arr.splice(instanceProps.rowIndex, 1);
+                    store.commit(url, arr);
+                }).catch((err) => {
+                    console.log(err)
+                });
             }
-            arr.splice(props.rowIndex, 1);
-            this.$store.commit(url, arr);
-          });
-        });
+        }
+
+        const accept = async (instanceProps: LooseDictionary) => {
+            const row = instanceProps.row as Row
+            const { res, err } = await guildRequests.acceptApply(row.userName, row.guild);
+            if (err) console.log(err)
+            if (res) {
+                console.log(instanceProps);
+                console.log(res);
+                ajaxCallback(res.data, res.config, () => {
+                    const arr = [...joinData.value];
+                    arr.splice(instanceProps.rowIndex, 1);
+                    store.commit('user/updateGuildJoinApplications', arr);
+                }).catch((err) => {
+                    console.log(err)
+                });
+            }
+        }
+
+        return {
+            reject,
+            accept,
+            joinData,
+            inviteData,
+            user
+        }
     },
-    accept(props) {
-      this.$axios
-        .post("/api/user/guild/accept", {
-          userName: props.row.userName,
-          guild: props.row.guild,
-          type: "join"
-        })
-        .then(r => {
-          console.log(props);
-          console.log(r);
-          this.ajaxCallback(r.data, this.accept.bind(this, props), () => {
-            let arr = [];
-            arr = arr.concat(this.tableData);
-            arr.splice(props.rowIndex, 1);
-            this.$store.commit("user/updateGuildJoinApplications", arr);
-          });
-        });
+    data() {
+        return {
+            confirm: false,
+            currentConfirmProps: '',
+            columns: [
+                {
+                    name: 'userName',
+                    required: true,
+                    label: '账号名称',
+                    align: 'left',
+                    field: (row: Row) => row.userName,
+                    format: (val: string) => `${ val }`,
+                    sortable: true
+                },
+                {
+                    name: 'ID',
+                    align: 'center',
+                    label: '申请ID',
+                    field: 'ID',
+                    sortable: true
+                },
+                {
+                    name: 'guild',
+                    label: '申请公会',
+                    field: 'guild'
+                },
+                {
+                    name: 'createdAt',
+                    label: '申请时间',
+                    field: 'createdAt'
+                },
+                {
+                    name: 'actions',
+                    label: '操作',
+                    field: 'actions',
+                    sortable: false
+                }
+            ]
+        };
     }
-  }
-};
+});
 </script>

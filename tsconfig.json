@@ -1,0 +1,15 @@
+{
+    "extends": "@quasar/app/tsconfig-preset",
+    "compilerOptions": {
+        "baseUrl": "."
+        //        "experimentalDecorators": true,
+        //        "importHelpers": false
+    },
+    "include": [
+        // repeated from base config's "include" setting
+        "src",
+        "tests",
+        // these are the eslint-only inclusions
+        ".eslintrc.js"
+    ]
+}

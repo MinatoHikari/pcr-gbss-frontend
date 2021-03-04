@@ -502,17 +502,18 @@
     </q-page>
 </template>
 
-<script>
-import ajaxCallbackFunc from "../../../mixins/AjaxCallback";
+<script lang="ts">
+import useRequests from '../../../compositions/useRequest';
+import { defineComponent } from 'vue';
+import { RouteRecordRaw } from "vue-router";
 
-export default {
-    name: "Guild-battle",
-    mixins: [ajaxCallbackFunc],
+export default defineComponent({
+    name: 'Guild-battle',
     preFetch({ store, redirect }) {
-        if (store.state.user.user.guild === "") {
-            redirect("/user/guild/status");
+        if (store.state.user.user.guild === '') {
+            redirect('/user/guild/status');
         }
-        return store.dispatch("user/fetchMyBattleOrder", redirect);
+        return store.dispatch('user/fetchMyBattleOrder', redirect);
     },
     computed: {
         user() {
@@ -534,7 +535,7 @@ export default {
             return this.$store.state.user.userBattleOrders;
         },
         lockColor() {
-            return this.guild.locker === "" ? "pink-4" : "accent";
+            return this.guild.locker === '' ? 'pink-4' : 'accent';
         },
         battleRecords() {
             return this.$store.state.user.battleRecords;
@@ -548,29 +549,29 @@ export default {
             damage: 1,
             orderColumns: [
                 {
-                    name: "ID",
+                    name: 'ID',
                     required: true,
-                    label: "预约ID",
-                    align: "left",
+                    label: '预约ID',
+                    align: 'left',
                     field: row => row.ID,
-                    format: val => `${ val }`,
+                    format: (val: string) => `${ val }`,
                     sortable: true
                 },
                 {
-                    name: "round",
-                    align: "center",
-                    label: "周目",
-                    field: "round"
+                    name: 'round',
+                    align: 'center',
+                    label: '周目',
+                    field: 'round'
                 },
                 {
-                    name: "bossNum",
-                    label: "Boss序号",
-                    field: "bossNum"
+                    name: 'bossNum',
+                    label: 'Boss序号',
+                    field: 'bossNum'
                 },
                 {
-                    name: "actions",
-                    label: "操作",
-                    field: "actions",
+                    name: 'actions',
+                    label: '操作',
+                    field: 'actions',
                     sortable: false
                 }
             ],
@@ -587,11 +588,11 @@ export default {
             let url;
             console.log(this.battleRecords);
             if (this.battleRecords.length === 0) {
-                url = `/api/user/battle/getBattleRecords`;
+                url = '/api/user/battle/getBattleRecords';
             } else {
                 url = `/api/user/battle/getBattleRecords?time=${ this.battleRecords[0].createdAt }&type=after`.replace(
-                    "+",
-                    "%2B"
+                    '+',
+                    '%2B'
                 );
             }
 
@@ -600,27 +601,29 @@ export default {
                 this.ajaxCallback(r.data, this.getNewestBattleRecords, () => {
                     let arr = [].concat(this.battleRecords);
                     arr = r.data.battleRecords.concat(arr);
-                    this.$store.commit("user/updateBattleRecords", arr);
+                    this.$store.commit('user/updateBattleRecords', arr);
                 });
+            }).catch((err) => {
+                console.log(err)
             });
         },
         nextBattleRecords(index, done) {
             let url;
             console.log(this.battleRecords);
             if (this.battleRecords.length === 0) {
-                url = `/api/user/battle/getBattleRecords`;
+                url = '/api/user/battle/getBattleRecords';
             } else {
                 url = `/api/user/battle/getBattleRecords?time=${
                     this.battleRecords[this.battleRecords.length - 1].createdAt
-                }`.replace("+", "%2B");
+                }`.replace('+', '%2B');
             }
 
             this.$axios.get(url).then(r => {
                 console.log(r);
-                if ("battleRecords" in r.data && r.data.battleRecords.length === 0) {
+                if ('battleRecords' in r.data && r.data.battleRecords.length === 0) {
                     this.$q.notify({
-                        type: "warning",
-                        message: "已无更多记录"
+                        type: 'warning',
+                        message: '已无更多记录'
                     });
                     done(true);
                     return;
@@ -631,34 +634,38 @@ export default {
                     () => {
                         if (this.battleRecords.length === 0) {
                             this.$store.commit(
-                                "user/updateBattleRecords",
+                                'user/updateBattleRecords',
                                 r.data.battleRecords
                             );
                         } else {
                             let arr = [].concat(this.battleRecords);
                             arr = arr.concat(r.data.battleRecords);
-                            this.$store.commit("user/updateBattleRecords", arr);
+                            this.$store.commit('user/updateBattleRecords', arr);
                         }
                         done();
                     }
                 );
+            }).catch((err) => {
+                console.log(err)
             });
         },
         // 刷新boss状态
         refreshBossStatus() {
             this.$store
-                .dispatch("user/fetchMyGuild", this.$router.replace.bind(this.$router))
+                .dispatch('user/fetchMyGuild', this.$router.replace.bind(this.$router))
                 .then(r => {
                     this.$q.notify({
-                        type: "positive",
-                        message: "已刷新Boss状态"
+                        type: 'positive',
+                        message: '已刷新Boss状态'
                     });
-                });
+                }).catch((err) => {
+                console.log(err)
+            });
         },
         // 预约
         orderBoss() {
             this.$axios
-                .post("/api/user/battle/order", {
+                .post('/api/user/battle/order', {
                     round: this.guild.round,
                     bossNum: this.orderBossNum
                 })
@@ -670,13 +677,15 @@ export default {
                             let arr = [];
                             arr = arr.concat(this.orderData);
                             arr.push(r.data.order);
-                            this.$store.commit("user/updateUserBattleOrders", arr);
+                            this.$store.commit('user/updateUserBattleOrders', arr);
                         },
                         () => {
                             this.refreshBossStatus();
                         }
                     );
-                });
+                }).catch((err) => {
+                console.log(err)
+            });
         },
         // 查询预约
         searchOrder() {
@@ -690,12 +699,14 @@ export default {
                         this.orderSearchResult = r.data.orders;
                         this.showSearchResult = true;
                     });
-                });
+                }).catch((err) => {
+                console.log(err)
+            });
         },
         // 取消预约
         cancelOrder(props) {
             this.$axios
-                .post("/api/user/battle/cancelOrder", {
+                .post('/api/user/battle/cancelOrder', {
                     user: this.user.name,
                     ID: props.row.ID
                 })
@@ -704,9 +715,11 @@ export default {
                         let arr = [];
                         arr = arr.concat(this.orderData);
                         arr.splice(props.rowIndex, 1);
-                        this.$store.commit("user/updateUserBattleOrders", arr);
+                        this.$store.commit('user/updateUserBattleOrders', arr);
                     });
-                });
+                }).catch((err) => {
+                console.log(err)
+            });
         },
         // 申请出刀
         enterIn() {
@@ -717,13 +730,15 @@ export default {
                         r.data,
                         this.enterIn,
                         () => {
-                            this.$store.commit("user/updateGuildBossLocker", this.user.name);
+                            this.$store.commit('user/updateGuildBossLocker', this.user.name);
                         },
                         () => {
                             this.refreshBossStatus();
                         }
                     );
-                });
+                }).catch((err) => {
+                console.log(err)
+            });
         },
         // 报刀
         clear(isOverkill) {
@@ -732,7 +747,7 @@ export default {
                 damage = this.guild.currentBossHP;
             }
             this.$axios
-                .post("/api/user/battle/clear", {
+                .post('/api/user/battle/clear', {
                     damage
                 })
                 .then(r => {
@@ -742,18 +757,20 @@ export default {
                         guild.currentBossTotalHP = r.data.currentBossTotalHP;
                         guild.currentBossScoreX = r.data.currentBossScoreX;
                         guild.hangUpMembers = r.data.hangUpMembers;
-                        this.$store.commit("user/updateGuildStatus", guild);
-                        this.$store.commit("user/updateUserStatus", r.data.user);
+                        this.$store.commit('user/updateGuildStatus', guild);
+                        this.$store.commit('user/updateUserStatus', r.data.user);
                         if (isOverkill) {
                             let arr = [].concat(this.orderData);
                             arr = arr.filter(item => {
                                 return item.bossNum !== guild.bossNum;
                             });
-                            this.$store.commit("user/updateUserBattleOrders", arr);
+                            this.$store.commit('user/updateUserBattleOrders', arr);
                         }
                         this.getNewestBattleRecords();
                     });
-                });
+                }).catch((err) => {
+                console.log(err)
+            });
         },
         // 解锁
         unlock() {
@@ -761,68 +778,78 @@ export default {
                 .get(`/api/user/battle/unlock?guild=${ this.user.guild }`)
                 .then(r => {
                     this.ajaxCallback(r.data, this.unlock, () => {
-                        this.$store.commit("user/updateGuildBossLocker", "");
+                        this.$store.commit('user/updateGuildBossLocker', '');
                     });
-                });
+                }).catch((err) => {
+                console.log(err)
+            });
         },
         // 挂树
         hangUp() {
-            this.$axios.get("/api/user/battle/hangUp").then(r => {
+            this.$axios.get('/api/user/battle/hangUp').then(r => {
                 this.ajaxCallback(r.data, this.hangUp, () => {
-                    this.$store.commit("user/updateUserStatus", r.data.user);
-                    this.$store.commit("user/updateGuildBossLocker", "");
+                    this.$store.commit('user/updateUserStatus', r.data.user);
+                    this.$store.commit('user/updateGuildBossLocker', '');
                     let arr = [];
                     console.log(this.guild.hangUpMembers)
                     if (this.guild.hangUpMembers) {
                         arr = arr.concat(this.guild.hangUpMembers);
                     }
-                    arr.push(this.user.name);
+                    arr.push(this.user);
                     console.log(arr);
-                    this.$store.commit("user/updateGuildHangUpMembers", arr);
+                    this.$store.commit('user/updateGuildHangUpMembers', arr);
                 });
+            }).catch((err) => {
+                console.log(err)
             });
         },
         // SL
         saveAndLoad() {
-            this.$axios.get("/api/user/battle/saveAndLoad").then(r => {
+            this.$axios.get('/api/user/battle/saveAndLoad').then(r => {
                 this.ajaxCallback(r.data, this.saveAndLoad, () => {
-                    this.$store.commit("user/updateUserStatus", r.data.user);
+                    this.$store.commit('user/updateUserStatus', r.data.user);
                 });
+            }).catch((err) => {
+                console.log(err)
             });
         },
         // 撤销出刀
         revert(id) {
-            this.$axios.get("/api/user/battle/revert").then(r => {
+            this.$axios.get('/api/user/battle/revert').then(r => {
                 console.log(r);
                 this.ajaxCallback(r.data, this.revert.bind(this, id), () => {
                     const guild = r.data.guild;
                     guild.currentBossTotalHP = r.data.currentBossTotalHP;
                     guild.currentBossScoreX = r.data.currentBossScoreX;
                     guild.hangUpMembers = r.data.hangUpMembers;
-                    this.$store.commit("user/updateGuildStatus", r.data.guild);
-                    this.$store.commit("user/updateUserStatus", r.data.user);
+                    this.$store.commit('user/updateGuildStatus', r.data.guild);
+                    this.$store.commit('user/updateUserStatus', r.data.user);
                     const arr = [].concat(this.battleRecords);
                     arr.shift();
-                    this.$store.commit("user/updateBattleRecords", arr);
+                    this.$store.commit('user/updateBattleRecords', arr);
                 });
+            }).catch((err) => {
+                console.log(err)
             });
         },
         resetBossStatus() {
-            let url = `/api/user/battle/resetBossStatus`;
+            let url = '/api/user/battle/resetBossStatus';
             if (this.ifclearRecord) {
-                url = `/api/user/battle/resetBossStatus?clear=true`;
+                url = '/api/user/battle/resetBossStatus?clear=true';
             }
             this.$axios.get(url).then(r => {
                 console.log(r);
                 this.ajaxCallback(r.data, this.resetBossStatus.bind(this), () => {
-                    this.$store.commit("user/updateGuildStatus", r.data.guild);
-                    this.$store.commit("user/updateUserStatus", r.data.user);
+                    this.$store.commit('user/updateGuildStatus', r.data.guild);
+                    this.$store.commit('user/updateUserStatus', r.data.user);
                     if (this.ifclearRecord) {
-                        this.$store.commit("user/updateBattleRecords", []);
+                        this.$store.commit('user/updateBattleRecords', []);
                     }
                 });
+            }).catch((err) => {
+                console.log(err)
             });
         }
     }
-};
+});
 </script>
