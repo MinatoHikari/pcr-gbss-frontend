@@ -1,55 +1,62 @@
 import { axios } from 'boot/axios';
-import { useQuasar } from 'quasar'
-import { useRouter } from 'vue-router'
+import { LocalStorage, Notify } from 'quasar';
+import { useRouter } from 'vue-router';
 import { AxiosPromise, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { RequestResponse } from 'src/requests/base';
 
 interface AxiosCommon {
-    Authorization: string
+    Authorization: string;
 }
 
 interface AxiosHeaders {
-    common: AxiosCommon
+    common: AxiosCommon;
 }
 
 export interface ResponseData {
-    code: -1 | 0 | 1 | 2
-    message?: string
+    code: -1 | 0 | 1 | 2;
+    message?: string;
 }
 
 export interface AuthResponseData extends ResponseData {
-    token?: string
+    token?: string;
 }
 
-export type Req = <T>(req: AxiosPromise<T>, cache?: boolean) => RequestResponse<T>
+export type Req = <T>(req: AxiosPromise<T>, cache?: boolean) => RequestResponse<T>;
 
 export default function useRequests() {
-    const $q = useQuasar();
-    const router = useRouter()
+    console.log(Notify);
+    console.log(LocalStorage);
+    const router = useRouter();
+    const { req } = useReqWrapper();
 
     const setAuthorization = () => {
-        (axios.defaults.headers as AxiosHeaders).common.Authorization = `Bearer ${ $q.localStorage.getItem(
-            'JWT-token'
-        ) as string || '' }`;
-    }
+        (axios.defaults.headers as AxiosHeaders).common.Authorization = `Bearer ${
+            (LocalStorage.getItem('JWT-token') as string) || ''
+        }`;
+    };
 
     const clearJwt = () => {
-        $q.localStorage.remove('JWT-token');
-        $q.localStorage.remove('JWT-Refresh-token');
-    }
+        LocalStorage.remove('JWT-token');
+        LocalStorage.remove('JWT-Refresh-token');
+    };
 
     const redirectToLogin = () => {
         router.replace('/auth/login').catch((err) => {
-            console.log(err)
+            console.log(err);
         });
-    }
+    };
 
-    setAuthorization()
+    setAuthorization();
 
-    const ajaxCallback = async (data: ResponseData, cacheKey: AxiosRequestConfig | null, success?: CallableFunction, error?: CallableFunction) => {
+    const ajaxCallback = async (
+        data: ResponseData,
+        cacheKey: AxiosRequestConfig | null,
+        success?: CallableFunction,
+        error?: CallableFunction
+    ) => {
         if (data.code === 1) {
             if ('message' in data) {
-                $q.notify({
+                Notify.create({
                     type: 'positive',
                     message: data.message
                 });
@@ -60,18 +67,20 @@ export default function useRequests() {
             if (cacheKey) {
                 const result = await refreshToken(cacheKey);
                 if (result) {
-                    const { res, err } = result
-                    if (err) return err
+                    const { res, err } = result;
+                    if (err) return err;
                     if (res) {
-                        ajaxCallback(res.data as ResponseData, null, success, error).catch((err) => {
-                            console.log(err)
-                        })
+                        ajaxCallback(res.data as ResponseData, null, success, error).catch(
+                            (err) => {
+                                console.log(err);
+                            }
+                        );
                     }
                 }
             }
         } else {
             if ('message' in data) {
-                $q.notify({
+                Notify.create({
                     type: 'negative',
                     message: data.message
                 });
@@ -80,13 +89,13 @@ export default function useRequests() {
             error && error();
 
             if (data.code === -1) {
-                $q.localStorage.remove('JWT-token');
+                LocalStorage.remove('JWT-token');
                 router.replace('/auth/login').catch((err) => {
-                    console.log(err)
+                    console.log(err);
                 });
             }
         }
-    }
+    };
 
     const refreshToken = async (cacheKey: AxiosRequestConfig) => {
         return axios
@@ -94,13 +103,13 @@ export default function useRequests() {
                 '/api/public/refreshToken',
                 {
                     reqtype: 'user',
-                    token: $q.localStorage.getItem('JWT-token')
+                    token: LocalStorage.getItem('JWT-token')
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${ $q.localStorage.getItem(
-                            'JWT-Refresh-token'
-                        ) as string || '' }`
+                        Authorization: `Bearer ${
+                            (LocalStorage.getItem('JWT-Refresh-token') as string) || ''
+                        }`
                     }
                 }
             )
@@ -108,51 +117,57 @@ export default function useRequests() {
                 switch (r.data.code) {
                     case 1:
                         console.log(r);
-                        $q.localStorage.set('JWT-token', r.data.token as string);
-                        setAuthorization()
-                        return req(axios.request(cacheKey))
+                        LocalStorage.set('JWT-token', r.data.token as string);
+                        setAuthorization();
+                        return req(axios.request(cacheKey));
                     case -1:
-                        $q.notify({
+                        Notify.create({
                             type: 'negative',
                             message: r.data.message
                         });
-                        clearJwt()
-                        redirectToLogin()
+                        clearJwt();
+                        redirectToLogin();
                         break;
                     case 0:
-                        $q.notify({
+                        Notify.create({
                             type: 'negative',
                             message: r.data.message
                         });
-                        clearJwt()
-                        redirectToLogin()
+                        clearJwt();
+                        redirectToLogin();
                         break;
                 }
-            }).catch((err) => {
-                console.log(err)
+            })
+            .catch((err) => {
+                console.log(err);
             });
-    }
+    };
 
-    const configMap = new WeakMap()
+    return {
+        ajaxCallback,
+        refreshToken
+    };
+}
+
+export const useReqWrapper = () => {
+    const configMap = new WeakMap();
 
     const req: Req = (req, cache) => {
         return new Promise((resolve) => {
             req.then((res) => {
                 if (cache) {
                     if (!configMap.has(res.config)) {
-                        configMap.set(res.config, res.config)
+                        configMap.set(res.config, res.config);
                     }
                 }
-                resolve({ res, err: null })
+                resolve({ res, err: null });
             }).catch((err) => {
-                resolve({ res: null, err })
-            })
-        })
-    }
+                resolve({ res: null, err });
+            });
+        });
+    };
 
     return {
-        ajaxCallback,
-        refreshToken,
         req
-    }
-}
+    };
+};

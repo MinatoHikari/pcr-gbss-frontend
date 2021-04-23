@@ -36,7 +36,6 @@ module.exports = {
         // 'plugin:vue/recommended', // Priority C: Recommended (Minimizing Arbitrary Choices and Cognitive Overhead)
 
         'standard'
-
     ],
 
     plugins: [
@@ -86,4 +85,4 @@ module.exports = {
         // allow debugger during development only
         'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
     }
-}
+};

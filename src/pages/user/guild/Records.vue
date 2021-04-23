@@ -11,10 +11,7 @@
                             row-key="name"
                         >
                             <template v-slot:top="props">
-                                <div
-                                    class="text-h6 row col-12 items-center"
-                                    :data-props="props"
-                                >
+                                <div class="text-h6 row col-12 items-center" :data-props="props">
                                     <q-icon
                                         class="q-mr-sm"
                                         size="md"
@@ -22,22 +19,14 @@
                                     ></q-icon>
                                     出刀记录
                                 </div>
-                                <div class="col-12 q-mt-md">
-                                    总出刀数：{{ totalBattletimes }}
-                                </div>
+                                <div class="col-12 q-mt-md">总出刀数：{{ totalBattletimes }}</div>
                             </template>
                             <template v-slot:body-cell-actions="props">
                                 <q-td key="actions" :props="props">
-                                    <q-btn
-                                        class="q-mr-xs"
-                                        color="positive"
-                                        @click="accept(props)"
-                                    >
+                                    <q-btn class="q-mr-xs" color="positive" @click="accept(props)">
                                         同意
                                     </q-btn>
-                                    <q-btn color="red" @click="reject(props)">
-                                        拒绝
-                                    </q-btn>
+                                    <q-btn color="red" @click="reject(props)"> 拒绝 </q-btn>
                                 </q-td>
                             </template>
                         </q-table>
@@ -49,8 +38,8 @@
 </template>
 
 <script lang="ts">
-import useRequests from '../../../compositions/useRequest';
 import { defineComponent } from 'vue';
+import { BattleRecords } from 'src/models/records';
 
 export default defineComponent({
     name: 'Guild-members',
@@ -84,8 +73,8 @@ export default defineComponent({
                     required: true,
                     label: '申请ID',
                     align: 'left',
-                    field: row => row.ID,
-                    format: (val: string) => `${ val }`,
+                    field: (row: BattleRecords) => row.ID,
+                    format: (val: string) => `${val}`,
                     sortable: true
                 },
                 {

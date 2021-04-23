@@ -2,16 +2,16 @@
     <q-layout view="hHh lpR lFf">
         <q-header elevated class="bg-primary text-white" height-hint="98">
             <q-toolbar class="bg-pink-4">
-                <q-btn dense flat round icon="menu" @click="left = !left"/>
+                <q-btn dense flat round icon="menu" @click="left = !left" />
 
                 <q-toolbar-title>
                     <q-avatar>
-                        <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg"/>
+                        <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg" />
                     </q-avatar>
                     PCR-GBSS
                 </q-toolbar-title>
 
-                <q-btn dense flat round icon="menu" @click="right = !right"/>
+                <q-btn dense flat round icon="menu" @click="right = !right" />
             </q-toolbar>
 
             <q-tabs inline-label class="bg-pink-11" align="left">
@@ -41,14 +41,14 @@
         </q-drawer>
 
         <q-page-container>
-            <router-view/>
+            <router-view />
         </q-page-container>
 
         <q-footer elevated class="bg-grey-8 text-white">
             <q-toolbar class="bg-pink-4">
                 <q-toolbar-title>
                     <q-avatar>
-                        <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg"/>
+                        <img src="https://cdn.quasar.dev/logo/svg/quasar-logo.svg" />
                     </q-avatar>
                     Title
                 </q-toolbar-title>

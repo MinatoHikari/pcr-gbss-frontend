@@ -20,7 +20,7 @@
                                     </div>
                                 </div>
                             </q-card-section>
-                            <q-separator/>
+                            <q-separator />
                             <q-card-section>
                                 <q-banner rounded class="bg-orange-5 text-white">
                                     <template v-slot:avatar>
@@ -54,7 +54,7 @@
                                             公会人数
                                         </q-chip>
                                         <q-chip outline color="primary" text-color="white">
-                                            {{ guild.memberNum + " 人" }}
+                                            {{ guild.memberNum + ' 人' }}
                                         </q-chip>
                                     </div>
                                     <div class="col">
@@ -79,15 +79,15 @@
                                         </q-chip>
                                         <q-chip
                                             :icon="
-                        guild.isRecruiting
-                          ? 'person_add_alt_1'
-                          : 'las la-user-lock'
-                      "
+                                                guild.isRecruiting
+                                                    ? 'person_add_alt_1'
+                                                    : 'las la-user-lock'
+                                            "
                                             outline
                                             :color="guild.isRecruiting ? 'positive' : 'grey-6'"
                                             text-color="white"
                                         >
-                                            {{ guild.isRecruiting ? "开放" : "关闭" }}
+                                            {{ guild.isRecruiting ? '开放' : '关闭' }}
                                         </q-chip>
                                         <q-toggle
                                             checked-icon="check"
@@ -100,7 +100,7 @@
                                     </div>
                                 </div>
                             </q-card-section>
-                            <q-separator/>
+                            <q-separator />
                             <q-card-actions align="right">
                                 <q-btn to="/user/guild/members" color="blue-6">查看成员</q-btn>
                                 <q-btn
@@ -128,19 +128,14 @@
                                     {{ user.name }}
                                 </div>
                             </q-card-section>
-                            <q-separator/>
+                            <q-separator />
                             <q-card-section>
                                 <div>
-                                    <q-badge
-                                        class="q-mr-sm"
-                                        outline
-                                        color="primary"
-                                        label="职能"
-                                    />
+                                    <q-badge class="q-mr-sm" outline color="primary" label="职能" />
                                     {{ jobFilter(user.job) }}
                                 </div>
                             </q-card-section>
-                            <q-separator/>
+                            <q-separator />
                             <q-card-actions align="right">
                                 <q-btn
                                     v-if="user.job === 'master'"
@@ -157,11 +152,7 @@
                                     招募成员
                                 </q-btn>
 
-                                <q-btn
-                                    v-if="user.job !== 'master'"
-                                    color="red"
-                                    label="退出公会"
-                                >
+                                <q-btn v-if="user.job !== 'master'" color="red" label="退出公会">
                                     <q-popup-proxy>
                                         <q-card flat :bordered="false">
                                             <q-card-section class="row items-center">
@@ -201,7 +192,7 @@
                 <q-card>
                     <q-card-section>
                         <div class="text-h6 row items-center">
-                            <q-icon class="q-mr-sm" size="sm" name="pets"/>
+                            <q-icon class="q-mr-sm" size="sm" name="pets" />
                             <span class="q-mr-sm">BOSS状态</span>
                             <q-btn
                                 round
@@ -210,23 +201,21 @@
                                 size="sm"
                                 @click="refreshBossStatus"
                             >
-                                <q-tooltip>
-                                    刷新Boss状态
-                                </q-tooltip>
+                                <q-tooltip> 刷新Boss状态</q-tooltip>
                             </q-btn>
                         </div>
                     </q-card-section>
-                    <q-separator/>
+                    <q-separator />
                     <q-card-section>
                         <div>
-                            <q-badge class="q-mr-sm" outline color="positive" label="HP"/>
+                            <q-badge class="q-mr-sm" outline color="positive" label="HP" />
                             <q-badge
                                 outline
                                 class="q-mr-sm"
                                 color="pink-4"
                                 :label="guild.bossNum + '号Boss'"
                             />
-                            <q-badge outline color="blue-6" :label="guild.round + '周目'"/>
+                            <q-badge outline color="blue-6" :label="guild.round + '周目'" />
                         </div>
                         <q-linear-progress
                             rounded
@@ -244,7 +233,7 @@
                             </div>
                         </q-linear-progress>
                     </q-card-section>
-                    <q-separator/>
+                    <q-separator />
                     <q-card-actions align="right">
                         <q-btn
                             label="公会战"
@@ -296,13 +285,8 @@
                 </q-card-section>
 
                 <q-card-actions align="right" class="text-primary">
-                    <q-btn flat label="取消" v-close-popup/>
-                    <q-btn
-                        color="primary"
-                        @click="guildIntroEdit"
-                        label="确定"
-                        v-close-popup
-                    />
+                    <q-btn flat label="取消" v-close-popup />
+                    <q-btn color="primary" @click="guildIntroEdit" label="确定" v-close-popup />
                 </q-card-actions>
             </q-card>
         </q-dialog>
@@ -331,13 +315,8 @@
                 </q-card-section>
 
                 <q-card-actions align="right" class="text-primary">
-                    <q-btn flat label="取消" v-close-popup/>
-                    <q-btn
-                        color="primary"
-                        label="确认"
-                        @click="dissolveGuild"
-                        v-close-popup
-                    />
+                    <q-btn flat label="取消" v-close-popup />
+                    <q-btn color="primary" label="确认" @click="dissolveGuild" v-close-popup />
                 </q-card-actions>
             </q-card>
         </q-dialog>
@@ -346,17 +325,15 @@
 
 <script lang="ts">
 import useRequests from '../../../compositions/useRequest';
-import { defineComponent } from 'vue';
+import useUtils from 'src/compositions/useUtils';
+import { computed, defineComponent, ref } from 'vue';
+import { useStore } from 'src/store';
+import { useQuasar } from 'quasar';
+import { guildRequests } from 'src/requests/guild';
 
 export default defineComponent({
     name: 'Guild-Index',
     computed: {
-        user() {
-            return this.$store.state.user.user;
-        },
-        guild() {
-            return this.$store.state.user.guild;
-        },
         currentBossHPPervent() {
             return (
                 this.$store.state.user.guild.currentBossHP /
@@ -364,118 +341,116 @@ export default defineComponent({
             );
         },
         currentBossHPStatus() {
-            return `${ this.$store.state.user.guild.currentBossHP } / ${ this.$store.state.user.guild.currentBossTotalHP }`;
+            return `${this.$store.state.user.guild.currentBossHP} / ${this.$store.state.user.guild.currentBossTotalHP}`;
         }
     },
     setup() {
-        const { ajaxCallback } = useRequests()
-    },
-    mounted() {
-        this.isRecruiting = this.guild.isRecruiting;
-    },
-    data() {
-        return {
-            password: '',
-            prompt: false,
-            isPwd: true,
-            guildIntroEditor: false,
-            guildIntroToEdit: '',
-            isRecruiting: true
-        };
-    },
-    methods: {
-        jobFilter(val: string) {
-            switch (val) {
-                case 'master':
-                    return '会长';
-                case 'submaster':
-                    return '副会长';
-                case 'employed':
-                    return '会员';
-            }
-        },
-        refreshBossStatus() {
-            this.$store
-                .dispatch('user/fetchMyGuild', this.$router.replace.bind(this.$router))
-                .then(r => {
-                    this.$q.notify({
+        const { ajaxCallback } = useRequests();
+        const { jobFilter } = useUtils();
+        const $q = useQuasar();
+        const store = useStore();
+
+        const user = computed(() => store.state.user.user);
+        const guild = computed(() => store.state.user.guild);
+
+        const password = ref('');
+        const prompt = ref(false);
+        const isPwd = ref(true);
+        const guildIntroEditor = ref(false);
+        const guildIntroToEdit = ref('');
+        const isRecruiting = ref(true);
+
+        isRecruiting.value = guild.value.isRecruiting;
+
+        const refreshBossStatus = () => {
+            store
+                .dispatch('user/fetchMyGuild')
+                .then(() => {
+                    $q.notify({
                         type: 'positive',
                         message: '已刷新Boss状态'
                     });
-                }).catch((err) => {
-                console.log(err)
-            });
-        },
-        dissolveGuild() {
-            this.$axios
-                .post('/api/user/guild/dissolve', {
-                    password: this.password
                 })
-                .then(r => {
-                    this.ajaxCallback(
-                        r.data,
-                        this.dissolveGuild,
-                        () => {
-                            this.$store.commit('user/updateUserGuild', '');
-                            this.password = '';
-                        },
-                        () => {
-                            this.password = '';
-                        }
-                    );
-                }).catch((err) => {
-                console.log(err)
-            });
-        },
-        exitGuild() {
-            this.$axios.get('/api/user/guild/exit').then(r => {
-                this.ajaxCallback(r.data, this.exitGuild, () => {
-                    this.$store.commit('user/updateUserGuild', '');
+                .catch((err) => {
+                    console.log(err);
                 });
-            }).catch((err) => {
-                console.log(err)
-            });
-        },
-        guildIntroEdit() {
-            this.guildIntroEditor = false;
-            this.$axios
-                .post('/api/user/guild/updateSettings', {
-                    key: 'introduction',
-                    value: this.guildIntroToEdit
-                })
-                .then(r => {
-                    this.ajaxCallback(r.data, this.guildIntroEdit, () => {
-                        this.$store.commit(
-                            'user/updateGuildIntroduction',
-                            r.data.guild.introduction
-                        );
-                    });
+        };
+
+        const dissolveGuild = async () => {
+            const { res, err } = await guildRequests.dissolveGuild(password.value);
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(
+                    res.data,
+                    res.config,
+                    () => {
+                        store.commit('user/updateUserGuild', '');
+                        password.value = '';
+                    },
+                    () => {
+                        password.value = '';
+                    }
+                ).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        const exitGuild = async () => {
+            const { res, err } = await guildRequests.exitGuild();
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    store.commit('user/updateUserGuild', '');
                 }).catch((err) => {
-                console.log(err)
-            });
-        },
-        switchRecruiting(val) {
-            console.log(val);
-            this.$axios
-                .post('/api/user/guild/updateSettings', {
-                    key: 'isRecruiting',
-                    value: val
-                })
-                .then(r => {
-                    this.ajaxCallback(
-                        r.data,
-                        this.switchRecruiting.bind(this, val),
-                        () => {
-                            this.$store.commit(
-                                'user/updateGuildRecruiting',
-                                r.data.guild.isRecruiting
-                            );
-                        }
-                    );
+                    console.log(err);
+                });
+            }
+        };
+
+        const guildIntroEdit = async () => {
+            const { res, err } = await guildRequests.updateSettings(
+                'introduction',
+                guildIntroToEdit.value
+            );
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    store.commit('user/updateGuildIntroduction', res.data.guild.introduction);
                 }).catch((err) => {
-                console.log(err)
-            });
-        }
+                    console.log(err);
+                });
+            }
+        };
+
+        const switchRecruiting = async (val: string) => {
+            const { res, err } = await guildRequests.updateSettings('isRecruiting', val);
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    store.commit('user/updateGuildRecruiting', res.data.guild.isRecruiting);
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        return {
+            jobFilter,
+            password,
+            prompt,
+            isPwd,
+            guildIntroEditor,
+            guildIntroToEdit,
+            isRecruiting,
+            user,
+            guild,
+            refreshBossStatus,
+            dissolveGuild,
+            exitGuild,
+            guildIntroEdit,
+            switchRecruiting
+        };
     }
 });
 </script>

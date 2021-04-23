@@ -1,6 +1,11 @@
-import { createRouter, createWebHashHistory, createWebHistory, createMemoryHistory } from 'vue-router'
+import {
+    createRouter,
+    createWebHashHistory,
+    createWebHistory,
+    createMemoryHistory
+} from 'vue-router';
 
-import routes from './routes'
+import routes from './routes';
 
 const routerMode = process.env.VUE_ROUTER_MODE;
 
@@ -15,17 +20,21 @@ const routerMode = process.env.VUE_ROUTER_MODE;
 export default function (/* { store, ssrContext } */) {
     const createHistory = process.env.SERVER
         ? createMemoryHistory
-        : routerMode === 'history' ? createWebHistory : createWebHashHistory
+        : routerMode === 'history'
+        ? createWebHistory
+        : createWebHashHistory;
 
     return createRouter({
-        scrollBehavior: async () => {
-            return { left: 0, top: 0 }
+        scrollBehavior: () => {
+            return Promise.resolve().then(() => {
+                return { left: 0, top: 0 };
+            });
         },
         routes,
 
         // Leave these as they are and change in quasar.conf.js instead!
         // quasar.conf.js -> build -> vueRouterMode
         // quasar.conf.js -> build -> publicPath
-        history: createHistory(process.env.MODE === 'ssr' ? void 0 : process.env.VUE_ROUTER_BASE),
-    })
+        history: createHistory(process.env.MODE === 'ssr' ? undefined : process.env.VUE_ROUTER_BASE)
+    });
 }

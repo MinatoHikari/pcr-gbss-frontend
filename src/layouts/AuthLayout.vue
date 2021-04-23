@@ -1,6 +1,6 @@
 <template>
     <q-page>
-        <router-view/>
+        <router-view />
     </q-page>
 </template>
 
@@ -12,8 +12,9 @@ export default defineComponent({
     name: 'Auth',
     beforeRouteEnter(to, from, next) {
         if (LocalStorage.has('JWT-token')) {
-            next('/user')
+            return next('/user');
         }
+        next();
     }
 });
 </script>

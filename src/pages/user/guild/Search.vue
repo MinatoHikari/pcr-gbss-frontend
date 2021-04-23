@@ -7,7 +7,7 @@
                         <div class="text-h6">通过公会名称搜索</div>
                     </q-card-section>
 
-                    <q-separator/>
+                    <q-separator />
                     <q-card-section>
                         <q-input
                             color="brown-6"
@@ -25,13 +25,10 @@
                             </template>
                         </q-input>
                     </q-card-section>
-                    <q-separator/>
+                    <q-separator />
 
                     <q-card-actions vertical>
-                        <q-btn @click="searchGuild(guildName, 0)" color="brown-6"
-                        >搜索
-                        </q-btn
-                        >
+                        <q-btn @click="searchGuild(guildName, 0)" color="brown-6">搜索 </q-btn>
                     </q-card-actions>
                 </q-card>
             </div>
@@ -41,7 +38,7 @@
                         <div class="text-h6">通过公会ID搜索</div>
                     </q-card-section>
 
-                    <q-separator/>
+                    <q-separator />
                     <q-card-section>
                         <q-input
                             filled
@@ -61,7 +58,7 @@
                             </template>
                         </q-input>
                     </q-card-section>
-                    <q-separator/>
+                    <q-separator />
 
                     <q-card-actions vertical>
                         <q-btn @click="searchGuild('', guildID)" color="cyan-8">搜索</q-btn>
@@ -69,7 +66,7 @@
                 </q-card>
             </div>
             <div class="col-12">
-                <q-table :data="data" :columns="columns" row-key="name">
+                <q-table :data="tableData" :columns="columns" row-key="name">
                     <template v-slot:top="props">
                         <div class="text-h6 row items-center" :data-props="props">
                             <q-icon class="q-mr-xs" size="md" name="turned_in"></q-icon>
@@ -78,9 +75,7 @@
                     </template>
                     <template v-slot:body-cell-actions="props">
                         <q-td key="actions" :props="props">
-                            <q-btn color="teal-4" @click="joinGuild(props.row)">
-                                申请加入
-                            </q-btn>
+                            <q-btn color="teal-4" @click="joinGuild(props.row)"> 申请加入 </q-btn>
                         </q-td>
                     </template>
                 </q-table>
@@ -91,23 +86,61 @@
 
 <script lang="ts">
 import useRequests from '../../../compositions/useRequest';
-import { defineComponent } from 'vue';
-import { axios } from 'boot/axios'
+import { defineComponent, ref } from 'vue';
+import { guildRequests } from 'src/requests/guild';
+import { Guild } from 'src/models/guild';
 
 export default defineComponent({
     name: 'Guild-search',
+    setup() {
+        const guildName = ref('');
+        const guildID = ref(1);
+        const tableData = ref([] as Guild[]);
+
+        const { ajaxCallback } = useRequests();
+
+        const searchGuild = async (name: string, id: number) => {
+            const { res, err } = await guildRequests.searchGuild(name, id);
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, null, () => {
+                    tableData.value = [res.data.guild];
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        const joinGuild = async (row: Guild) => {
+            const { res, err } = await guildRequests.joinGuild(row.name);
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    return true;
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        return {
+            guildName,
+            guildID,
+            searchGuild,
+            joinGuild,
+            tableData
+        };
+    },
     data() {
         return {
-            guildName: '',
-            guildID: 1,
             columns: [
                 {
                     name: 'name',
                     required: true,
                     label: '公会名称',
                     align: 'left',
-                    field: row => row.name,
-                    format: (val: string) => `${ val }`,
+                    field: (row: Guild) => row.name,
+                    format: (val: string) => `${val}`,
                     sortable: true
                 },
                 {
@@ -157,33 +190,8 @@ export default defineComponent({
                     field: 'actions',
                     sortable: false
                 }
-            ],
-            data: []
+            ]
         };
-    },
-    methods: {
-        searchGuild(name, id) {
-            const url = `/api/public/getGuild?guild=${ name }&id=${ id }`;
-            axios.get(url).then(r => {
-                this.ajaxCallback(r.data, null, () => {
-                    this.data = r.data.guild;
-                });
-            }).catch((err) => {
-                console.log(err)
-            });
-        },
-        joinGuild(row) {
-            axios
-                .post('/api/user/guild/join', {
-                    guild: row.name
-                })
-                .then(r => {
-                    this.ajaxCallback(r.data, this.joinGuild.bind(this, row), () => {
-                    });
-                }).catch((err) => {
-                console.log(err)
-            });
-        }
     }
 });
 </script>

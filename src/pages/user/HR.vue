@@ -5,19 +5,13 @@
                 <q-table :data="joinData" :columns="joinColumns" row-key="name">
                     <template v-slot:top="props">
                         <div class="text-h6 row items-center" :data-props="props">
-                            <q-icon
-                                class="q-mr-sm"
-                                size="md"
-                                name="forward_to_inbox"
-                            ></q-icon>
+                            <q-icon class="q-mr-sm" size="md" name="forward_to_inbox"></q-icon>
                             我的申请
                         </div>
                     </template>
                     <template v-slot:body-cell-actions="props">
                         <q-td key="actions" :props="props">
-                            <q-btn color="red" @click="reject(props)">
-                                撤回
-                            </q-btn>
+                            <q-btn color="red" @click="reject(props)"> 撤回 </q-btn>
                         </q-td>
                     </template>
                 </q-table>
@@ -35,9 +29,7 @@
                             <q-btn class="q-mr-xs" color="positive" @click="accept(props)">
                                 同意
                             </q-btn>
-                            <q-btn color="red" @click="reject(props)">
-                                拒绝
-                            </q-btn>
+                            <q-btn color="red" @click="reject(props)"> 拒绝 </q-btn>
                         </q-td>
                     </template>
                 </q-table>
@@ -48,29 +40,76 @@
 
 <script lang="ts">
 import useRequests from '../../compositions/useRequest';
-import { defineComponent } from 'vue';
+import { computed, defineComponent } from 'vue';
+import { Store } from 'vuex';
+import { MainState, useStore } from 'src/store';
+import { Applications } from 'src/models/applications';
+import { userRequests } from 'src/requests/user';
+import { LooseDictionary } from 'quasar';
 
 export default defineComponent({
     name: 'User-HR',
-    preFetch({
-                 store,
-                 redirect,
-             }) {
-        return store.dispatch('user/fetchUserAplications', {
-            user: store.state.user.user,
+    preFetch({ store, redirect }) {
+        return store.dispatch('user/fetchUserApplications', {
+            user: (store as Store<MainState>).state.user.user,
             redirect
         });
     },
-    computed: {
-        user() {
-            return this.$store.state.user.user;
-        },
-        joinData() {
-            return this.$store.state.user.userJoinApplications;
-        },
-        inviteData() {
-            return this.$store.state.user.userInviteApplications;
-        }
+    setup() {
+        const { ajaxCallback } = useRequests();
+        const store = useStore();
+
+        const user = computed(() => store.state.user.user);
+        const joinData = computed(() => store.state.user.userJoinApplications);
+        const inviteData = computed(() => store.state.user.userInviteApplications);
+
+        const reject = async (instanceProps: LooseDictionary) => {
+            const row = instanceProps.row as Applications;
+            const { res, err } = await userRequests.reject(row.userName, row.guild, row.type);
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    let arr: Applications[] = [];
+                    let url = 'user/';
+                    if (row.type === 'join') {
+                        arr = arr.concat(joinData.value);
+                        url = url + 'updateUserJoinApplications';
+                    } else {
+                        arr = arr.concat(inviteData.value);
+                        url = url + 'updateUserInviteApplications';
+                    }
+                    arr.splice(instanceProps.rowIndex, 1);
+                    store.commit(url, arr);
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        const accept = async (instanceProps: LooseDictionary) => {
+            const row = instanceProps.row as Applications;
+            const { res, err } = await userRequests.accept(row.userName, row.guild);
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    let arr: Applications[] = [];
+                    arr = arr.concat(inviteData.value);
+                    arr.splice(instanceProps.rowIndex, 1);
+                    store.commit('user/updateUserInviteApplications', arr);
+                    store.commit('user/updateUserGuild', row.guild);
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        return {
+            user,
+            joinData,
+            inviteData,
+            reject,
+            accept
+        };
     },
     data() {
         return {
@@ -80,8 +119,8 @@ export default defineComponent({
                     required: true,
                     label: '申请ID',
                     align: 'left',
-                    field: row => row.ID,
-                    format: val => `${ val }`,
+                    field: (row: Applications) => row.ID,
+                    format: (val: string) => `${val}`,
                     sortable: true
                 },
                 {
@@ -107,8 +146,8 @@ export default defineComponent({
                     required: true,
                     label: '邀请ID',
                     align: 'left',
-                    field: row => row.ID,
-                    format: (val: string) => `${ val }`,
+                    field: (row: Applications) => row.ID,
+                    format: (val: string) => `${val}`,
                     sortable: true
                 },
                 {
@@ -134,52 +173,6 @@ export default defineComponent({
                 }
             ]
         };
-    },
-    methods: {
-        reject(props) {
-            console.log(props);
-            this.$axios
-                .post('/api/user/guild/reject', {
-                    userName: props.row.userName,
-                    guild: props.row.guild,
-                    type: props.row.type
-                })
-                .then(r => {
-                    this.ajaxCallback(r.data, this.reject.bind(this, props), () => {
-                        let arr = [];
-                        let url = 'user/';
-                        if (props.row.type === 'join') {
-                            arr = arr.concat(this.joinData);
-                            url = url + 'updateUserJoinApplications';
-                        } else {
-                            arr = arr.concat(this.inviteData);
-                            url = url + 'updateUserInviteApplications';
-                        }
-                        arr.splice(props.rowIndex, 1);
-                        this.$store.commit(url, arr);
-                    });
-                });
-        },
-        accept(props) {
-            this.$axios
-                .post('/api/user/guild/accept', {
-                    userName: props.row.userName,
-                    guild: props.row.guild,
-                    type: 'invite'
-                })
-                .then(r => {
-                    console.log(r);
-                    this.ajaxCallback(r.data, this.accept.bind(this, props), () => {
-                        let arr = [];
-                        arr = arr.concat(this.inviteData);
-                        arr.splice(props.rowIndex, 1);
-                        this.$store.commit('user/updateUserInviteApplications', arr);
-                        this.$store.commit('user/updateUserGuild', props.row.guild);
-                    });
-                }).catch((err) => {
-                console.log(err)
-            });
-        }
     }
 });
 </script>

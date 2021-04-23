@@ -12,10 +12,22 @@
                 <div class="q-mt-md">
                     <div class="row q-col-gutter-sm">
                         <div class="col">
-                            <q-btn outline class="col auth-btn" color="primary" to="/auth/login" label="登录"/>
+                            <q-btn
+                                outline
+                                class="col auth-btn"
+                                color="primary"
+                                :to="`/auth/login`"
+                                label="登录"
+                            />
                         </div>
                         <div class="col">
-                            <q-btn outline class="col auth-btn" color="secondary" label="注册" to="/auth/register"/>
+                            <q-btn
+                                outline
+                                class="col auth-btn"
+                                color="secondary"
+                                label="注册"
+                                to="/auth/register"
+                            />
                         </div>
                     </div>
                 </div>
@@ -42,5 +54,4 @@ export default defineComponent({
     right: 0;
     z-index: 1;
 }
-
 </style>

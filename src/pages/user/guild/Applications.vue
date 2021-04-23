@@ -36,11 +36,7 @@
                 <q-table :data="inviteData" :columns="columns" row-key="name">
                     <template v-slot:top="props">
                         <div class="text-h6 row items-center" :data-props="props">
-                            <q-icon
-                                class="q-mr-sm"
-                                size="md"
-                                name="forward_to_inbox"
-                            ></q-icon>
+                            <q-icon class="q-mr-sm" size="md" name="forward_to_inbox"></q-icon>
                             邀请一览
                         </div>
                     </template>
@@ -67,16 +63,9 @@
 import useRequests from '../../../compositions/useRequest';
 import { defineComponent, computed } from 'vue';
 import { useStore } from 'src/store';
-import { LooseDictionary } from 'quasar'
+import { LooseDictionary } from 'quasar';
 import { guildRequests } from 'src/requests/guild';
-
-interface Row {
-    userName: string
-    ID: string
-    guild: string
-    createdAt: string
-    type: string
-}
+import { Applications } from 'src/models/applications';
 
 export default defineComponent({
     name: 'Guild-members',
@@ -84,19 +73,19 @@ export default defineComponent({
         return store.dispatch('user/fetchGuildApplications', redirect);
     },
     setup(prop, context) {
-        console.log(prop)
-        console.log(context)
-        const { ajaxCallback } = useRequests()
-        const store = useStore()
+        console.log(prop);
+        console.log(context);
+        const { ajaxCallback } = useRequests();
+        const store = useStore();
 
-        const joinData = computed(() => store.state.user.guildJoinApplications)
-        const inviteData = computed(() => store.state.user.guildInviteApplications)
-        const user = computed(() => store.state.user.user)
+        const joinData = computed(() => store.state.user.guildJoinApplications);
+        const inviteData = computed(() => store.state.user.guildInviteApplications);
+        const user = computed(() => store.state.user.user);
 
         const reject = async (instanceProps: LooseDictionary) => {
-            const row = instanceProps.row as Row
+            const row = instanceProps.row as Applications;
             const { res, err } = await guildRequests.rejectApply(row.userName, row.guild, row.type);
-            if (err) console.log(err)
+            if (err) console.log(err);
             if (res) {
                 ajaxCallback(res.data, res.config, () => {
                     let arr: any[] = [];
@@ -111,15 +100,15 @@ export default defineComponent({
                     arr.splice(instanceProps.rowIndex, 1);
                     store.commit(url, arr);
                 }).catch((err) => {
-                    console.log(err)
+                    console.log(err);
                 });
             }
-        }
+        };
 
         const accept = async (instanceProps: LooseDictionary) => {
-            const row = instanceProps.row as Row
+            const row = instanceProps.row as Applications;
             const { res, err } = await guildRequests.acceptApply(row.userName, row.guild);
-            if (err) console.log(err)
+            if (err) console.log(err);
             if (res) {
                 console.log(instanceProps);
                 console.log(res);
@@ -128,10 +117,10 @@ export default defineComponent({
                     arr.splice(instanceProps.rowIndex, 1);
                     store.commit('user/updateGuildJoinApplications', arr);
                 }).catch((err) => {
-                    console.log(err)
+                    console.log(err);
                 });
             }
-        }
+        };
 
         return {
             reject,
@@ -139,7 +128,7 @@ export default defineComponent({
             joinData,
             inviteData,
             user
-        }
+        };
     },
     data() {
         return {
@@ -151,8 +140,8 @@ export default defineComponent({
                     required: true,
                     label: '账号名称',
                     align: 'left',
-                    field: (row: Row) => row.userName,
-                    format: (val: string) => `${ val }`,
+                    field: (row: Applications) => row.userName,
+                    format: (val: string) => `${val}`,
                     sortable: true
                 },
                 {

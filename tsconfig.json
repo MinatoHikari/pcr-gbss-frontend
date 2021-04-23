@@ -9,6 +9,8 @@
         // repeated from base config's "include" setting
         "src",
         "tests",
+        "./quasar.conf.js",
+        "./babel.config.js",
         // these are the eslint-only inclusions
         ".eslintrc.js"
     ]

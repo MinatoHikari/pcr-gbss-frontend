@@ -3,14 +3,14 @@
         <q-list v-for="(menuItem, index) in menuList" :key="index">
             <q-item clickable :to="menuItem.route" :active="menuItem.label === 'Outbox'" v-ripple>
                 <q-item-section avatar>
-                    <q-icon :name="menuItem.icon"/>
+                    <q-icon :name="menuItem.icon" />
                 </q-item-section>
                 <q-item-section>
                     {{ menuItem.label }}
                 </q-item-section>
             </q-item>
 
-            <q-separator v-if="menuItem.separator"/>
+            <q-separator v-if="menuItem.separator" />
         </q-list>
     </q-scroll-area>
 </template>

@@ -1,13 +1,7 @@
 <template>
     <q-page class="flex flex-center relative">
-        <q-btn
-            v-go-back="'/auth/login'"
-            class="absolute btn-back q-ma-md"
-            round
-            color="info"
-            icon="login"
-        />
-        <q-card style="min-width:280px">
+        <q-btn to="/auth/login" class="absolute btn-back q-ma-md" round color="info" icon="login" />
+        <q-card style="min-width: 280px">
             <q-card-section>
                 <div class="text-h6">重置密码</div>
             </q-card-section>
@@ -20,15 +14,15 @@
                     hint="请输入需要找回密码的账号邮箱"
                     lazy-rules
                     :rules="[
-            val => v$.email.required || '请勿留空',
-            val => v$.email.email || '请输入合法邮箱'
-          ]"
+                        (val) => v$.email.required || '请勿留空',
+                        (val) => v$.email.email || '请输入合法邮箱'
+                    ]"
                 />
                 <q-input
                     class="q-mt-md full-width"
                     outlined
                     :loading="captcha.captchaLoadingState"
-                    ref="captchaDigital"
+                    ref="captchaInput"
                     v-model="captchaDigital"
                     @focus="captcha.captchaLoadingState = true"
                     debounce="1000"
@@ -36,9 +30,9 @@
                     hint="请输入图中的验证码，验证通过后才可获取邮件验证码"
                     lazy-rules
                     :rules="[
-            val => cv$.captchaDigital.required || '请勿留空',
-            val => cv$.captchaDigital.minLength || '请输入六位验证码'
-          ]"
+                        (val) => cv$.captchaDigital.required || '请勿留空',
+                        (val) => cv$.captchaDigital.minLength || '请输入六位验证码'
+                    ]"
                 />
                 <q-img
                     :src="captcha.img"
@@ -46,9 +40,7 @@
                     class="q-mt-md full-width cursor-pointer"
                     @click="refreshCaptcha"
                 >
-                    <q-tooltip anchor="top middle" self="top middle">
-                        点击刷新验证码
-                    </q-tooltip>
+                    <q-tooltip anchor="top middle" self="top middle"> 点击刷新验证码 </q-tooltip>
                 </q-img>
                 <q-btn
                     class="q-mt-md full-width"
@@ -57,25 +49,14 @@
                     :disable="disableSendMail"
                 >
                     <q-inner-loading :showing="emailBtnLoading">
-                        <q-spinner-gears size="25px" color="primary"/>
+                        <q-spinner-gears size="25px" color="primary" />
                     </q-inner-loading>
                     获取邮件验证码
                 </q-btn>
             </q-card-section>
             <q-card-section v-if="step === 'reset'">
-                <q-input
-                    filled
-                    disable
-                    ref="email"
-                    v-model="email"
-                    label="账号邮箱"
-                    lazy-rules
-                />
-                <q-form
-                    @submit="resetPassword"
-                    @reset="onFormReset"
-                    class="q-mt-md q-gutter-md"
-                >
+                <q-input filled disable ref="email" v-model="email" label="账号邮箱" lazy-rules />
+                <q-form @submit="resetPassword" @reset="onFormReset" class="q-mt-md q-gutter-md">
                     <q-input
                         class="q-mt-md"
                         outlined
@@ -85,9 +66,9 @@
                         hint="请输入重置邮件中的验证码"
                         lazy-rules
                         :rules="[
-              val => v$.mailVerifyNumber.required || '请勿留空',
-              val => v$.mailVerifyNumber.minLength || '请输入七位验证码'
-            ]"
+                            (val) => v$.mailVerifyNumber.required || '请勿留空',
+                            (val) => v$.mailVerifyNumber.minLength || '请输入七位验证码'
+                        ]"
                     />
                     <q-input
                         outlined
@@ -97,7 +78,7 @@
                         label="密码 *"
                         hint="请输入新的账号密码"
                         lazy-rules
-                        :rules="[val => v$.password.required || '请勿留空']"
+                        :rules="[(val) => v$.password.required || '请勿留空']"
                     >
                         <template v-slot:append>
                             <q-icon
@@ -117,9 +98,9 @@
                         hint="请再次输入新的账号密码"
                         lazy-rules
                         :rules="[
-              val => v$.passwordAgain.required || '请勿留空',
-              val => v$.passwordAgain.sameAsPassword || '两次输入的密码不一致'
-            ]"
+                            (val) => v$.passwordAgain.required || '请勿留空',
+                            (val) => v$.passwordAgain.sameAsPassword || '两次输入的密码不一致'
+                        ]"
                     >
                         <template v-slot:append>
                             <q-icon
@@ -131,14 +112,8 @@
                     </q-input>
 
                     <div class="q-mt-md">
-                        <q-btn label="确定" type="submit" color="primary"/>
-                        <q-btn
-                            label="清空"
-                            type="reset"
-                            color="primary"
-                            flat
-                            class="q-ml-sm"
-                        />
+                        <q-btn label="确定" type="submit" color="primary" />
+                        <q-btn label="清空" type="reset" color="primary" flat class="q-ml-sm" />
                     </div>
                 </q-form>
             </q-card-section>
@@ -159,13 +134,13 @@ import { authRequests } from 'src/requests/auth';
 export default defineComponent({
     name: 'PasswordReset',
     setup() {
-        const { ajaxCallback } = useRequests()
-        const router = useRouter()
-        const $q = useQuasar()
-        const { captcha, captchaDigital, cv$, refreshCaptcha, disableSendMail } = useCaptcha()
+        const { ajaxCallback } = useRequests();
+        const router = useRouter();
+        const $q = useQuasar();
+        const { captcha, captchaDigital, cv$, refreshCaptcha, disableSendMail } = useCaptcha();
 
-        const email = ref('')
-        const emailBtnLoading = ref(false)
+        const email = ref('');
+        const emailBtnLoading = ref(false);
         const step = ref('email');
         const mailVerifyNumber = ref('');
         const password = ref('');
@@ -182,21 +157,21 @@ export default defineComponent({
                 required,
                 minLength: minLength(7)
             }
-        }
+        };
 
         const v$ = useVuelidate(rules, { email, mailVerifyNumber, password, passwordAgain });
 
         const sendPasswordResetMail = async () => {
             disableSendMail.value = true;
             emailBtnLoading.value = true;
-            if (v$.value.email.$invalid) {
+            if (v$.value.email.$error) {
                 disableSendMail.value = false;
                 emailBtnLoading.value = false;
                 return;
             }
             if (captcha.value.validated) {
-                const { res, err } = await authRequests.sendPasswordResetMail(email.value)
-                if (err) console.log(err)
+                const { res, err } = await authRequests.sendPasswordResetMail(email.value);
+                if (err) console.log(err);
                 if (res) {
                     ajaxCallback(
                         res.data,
@@ -209,7 +184,7 @@ export default defineComponent({
                             emailBtnLoading.value = false;
                         }
                     ).catch((err) => {
-                        console.log(err)
+                        console.log(err);
                     });
                 }
             } else {
@@ -220,7 +195,7 @@ export default defineComponent({
                 disableSendMail.value = false;
                 emailBtnLoading.value = false;
             }
-        }
+        };
 
         const resetPassword = async () => {
             const { res, err } = await authRequests.resetPassword({
@@ -228,40 +203,40 @@ export default defineComponent({
                 emailVerifyNumber: mailVerifyNumber.value,
                 password: password.value,
                 passwordAgain: passwordAgain.value
-            })
-            if (err) console.log(err)
+            });
+            if (err) console.log(err);
             if (res) {
                 ajaxCallback(
                     res.data,
                     null,
                     () => {
                         router.replace('/auth/login').catch((err) => {
-                            console.log(err)
+                            console.log(err);
                         });
                     },
                     () => {
-                        this.step = 'email';
-                        this.password = '';
-                        this.passwordAgain = '';
-                        this.mailVerifyNumber = '';
+                        step.value = 'email';
+                        password.value = '';
+                        passwordAgain.value = '';
+                        mailVerifyNumber.value = '';
                     }
                 ).catch((err) => {
-                    console.log(err)
+                    console.log(err);
                 });
             }
-        }
+        };
 
         watch(step, () => {
             if (!captcha.value.validated) {
                 step.value = 'email';
             }
-        })
+        });
 
         const onFormReset = () => {
             password.value = '';
             passwordAgain.value = '';
             mailVerifyNumber.value = '';
-        }
+        };
 
         return {
             v$,
@@ -281,7 +256,7 @@ export default defineComponent({
             onFormReset,
             resetPassword,
             sendPasswordResetMail
-        }
+        };
     }
 });
 </script>

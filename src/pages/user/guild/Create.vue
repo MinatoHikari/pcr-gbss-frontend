@@ -1,7 +1,7 @@
 <template>
-    <q-page padding class=" relative">
+    <q-page padding class="relative">
         <q-btn
-            v-go-back="'/user/home'"
+            to="/user/home"
             class="absolute btn-back q-ma-md"
             round
             color="info"
@@ -13,7 +13,7 @@
                     <span>创建公会</span>
                 </div>
             </q-card-section>
-            <q-separator/>
+            <q-separator />
             <q-card-section>
                 <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
                     <q-input
@@ -23,7 +23,7 @@
                         label="公会名称 *"
                         hint="创建后可修改，不可重名"
                         :lazyRules="true"
-                        :rules="[val => $v.name.required || '请勿留空']"
+                        :rules="[(val) => $v.name.required || '请勿留空']"
                     />
 
                     <q-input
@@ -33,27 +33,19 @@
                         label="公会介绍 *"
                         hint="创建后可修改"
                         lazy-rules
-                        :rules="[val => $v.introduction.required || '请勿留空']"
+                        :rules="[(val) => $v.introduction.required || '请勿留空']"
                     />
 
                     <div class="q-gutter-sm">
-                        <div class="q-mt-md">
-                            请选择公会所在服务器
-                        </div>
-                        <q-radio v-model="area" val="japan" label="日本"/>
-                        <q-radio v-model="area" val="taiwan" label="台服"/>
-                        <q-radio v-model="area" val="bilibili" label="BILIBILI"/>
+                        <div class="q-mt-md">请选择公会所在服务器</div>
+                        <q-radio v-model="area" val="japan" label="日本" />
+                        <q-radio v-model="area" val="taiwan" label="台服" />
+                        <q-radio v-model="area" val="bilibili" label="BILIBILI" />
                     </div>
 
                     <div>
-                        <q-btn label="创建" type="submit" color="primary"/>
-                        <q-btn
-                            label="清空"
-                            type="reset"
-                            color="primary"
-                            flat
-                            class="q-ml-sm"
-                        />
+                        <q-btn label="创建" type="submit" color="primary" />
+                        <q-btn label="清空" type="reset" color="primary" flat class="q-ml-sm" />
                     </div>
                 </q-form>
             </q-card-section>
@@ -64,27 +56,77 @@
 <script lang="ts">
 import { required } from '@vuelidate/validators';
 import useRequests from '../../../compositions/useRequest';
-import { defineComponent } from 'vue';
-import { Store } from 'vuex'
-import { MainState } from 'src/store';
+import { computed, defineComponent, ref } from 'vue';
+import { Store } from 'vuex';
+import { MainState, useStore } from 'src/store';
+import { guildRequests } from 'src/requests/guild';
+import { RouteRecordRaw, useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
 
 export default defineComponent({
     name: 'Guild-create',
     preFetch({ store, redirect }) {
         if ((store as Store<MainState>).state.user.user.guild !== '') {
-            redirect('/user/guild/status');
+            redirect({ path: '/user/guild/status' } as RouteRecordRaw);
         }
     },
-    computed: {
-        user() {
-            return this.$store.state.user.user;
-        }
-    },
-    data() {
+    setup() {
+        const { ajaxCallback } = useRequests();
+        const store = useStore();
+        const router = useRouter();
+        const $q = useQuasar();
+
+        const user = computed(() => store.state.user.user);
+
+        const name = ref('');
+        const introduction = ref('');
+        const area = ref('japan');
+
+        const onReset = () => {
+            name.value = '';
+            introduction.value = '';
+        };
+
+        const createGuild = async () => {
+            const { res, err } = await guildRequests.createGuild(
+                name.value,
+                introduction.value,
+                area.value,
+                user.value.name
+            );
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    store.commit('user/updateUserGuild', name.value);
+                    router.push('/user/home').catch((err) => {
+                        console.log(err);
+                    });
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        const onSubmit = () => {
+            $q.notify({
+                color: 'green-4',
+                textColor: 'white',
+                icon: 'cloud_done',
+                message: 'Submitted'
+            });
+            createGuild().catch((err) => {
+                console.log(err);
+            });
+        };
+
         return {
-            name: null,
-            introduction: null,
-            area: 'japan'
+            user,
+            name,
+            introduction,
+            area,
+            onReset,
+            createGuild,
+            onSubmit
         };
     },
     validations: {
@@ -93,38 +135,6 @@ export default defineComponent({
         },
         introduction: {
             required
-        }
-    },
-    methods: {
-        onSubmit() {
-            this.$q.notify({
-                color: 'green-4',
-                textColor: 'white',
-                icon: 'cloud_done',
-                message: 'Submitted'
-            });
-            this.createGuild();
-        },
-        onReset() {
-            this.name = null;
-            this.introduction = null;
-        },
-        createGuild() {
-            this.$axios
-                .post('/api/user/guild/create', {
-                    name: this.name,
-                    introduction: this.introduction,
-                    area: this.area,
-                    master: this.$store.state.user.user.name
-                })
-                .then(r => {
-                    this.ajaxCallback(r.data, this.createGuild, () => {
-                        this.$store.commit('user/updateUserGuild', this.name);
-                        this.$router.push('/user/home');
-                    });
-                }).catch((err) => {
-                console.log(err)
-            });
         }
     }
 });

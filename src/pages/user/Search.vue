@@ -7,7 +7,7 @@
                         <div class="text-h6">通过账号名称搜索</div>
                     </q-card-section>
 
-                    <q-separator/>
+                    <q-separator />
                     <q-card-section>
                         <q-input
                             color="brown-6"
@@ -25,7 +25,7 @@
                             </template>
                         </q-input>
                     </q-card-section>
-                    <q-separator/>
+                    <q-separator />
 
                     <q-card-actions vertical>
                         <q-btn @click="searchUser(userName, 0)" color="brown-6">搜索</q-btn>
@@ -38,7 +38,7 @@
                         <div class="text-h6">通过账号ID搜索</div>
                     </q-card-section>
 
-                    <q-separator/>
+                    <q-separator />
                     <q-card-section>
                         <q-input
                             filled
@@ -58,7 +58,7 @@
                             </template>
                         </q-input>
                     </q-card-section>
-                    <q-separator/>
+                    <q-separator />
 
                     <q-card-actions vertical>
                         <q-btn @click="searchUser('', userID)" color="cyan-8">搜索</q-btn>
@@ -92,27 +92,65 @@
 
 <script lang="ts">
 import useRequests from '../../compositions/useRequest';
-import { defineComponent } from 'vue';
+import { computed, defineComponent, ref } from 'vue';
+import { useStore } from 'src/store';
+import { User } from 'src/models/user';
+import { userRequests } from 'src/requests/user';
 
 export default defineComponent({
     name: 'Guild-search',
-    computed: {
-        user() {
-            return this.$store.state.user.user;
-        }
+    setup() {
+        const store = useStore();
+        const { ajaxCallback } = useRequests();
+        const user = computed(() => store.state.user.user);
+
+        const userName = ref('');
+        const userID = ref(1);
+        const data = ref([] as User[]);
+
+        const searchUser = async (name: string, id: number) => {
+            const { res, err } = await userRequests.searchUser(name, id);
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    data.value = res.data.users;
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        const invite = async (row: User) => {
+            const { res, err } = await userRequests.invite(row.name);
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res?.config, () => {
+                    console.log('success');
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        return {
+            userName,
+            user,
+            userID,
+            data,
+            searchUser,
+            invite
+        };
     },
     data() {
         return {
-            userName: '',
-            userID: 1,
             columns: [
                 {
                     name: 'name',
                     required: true,
                     label: '账号名称',
                     align: 'left',
-                    field: row => row.name,
-                    format: (val: string) => `${ val }`,
+                    field: (row: User) => row.name,
+                    format: (val: string) => `${val}`,
                     sortable: true
                 },
                 {
@@ -138,33 +176,8 @@ export default defineComponent({
                     field: 'actions',
                     sortable: false
                 }
-            ],
-            data: []
+            ]
         };
-    },
-    methods: {
-        searchUser(name, id) {
-            const url = `/api/public/getUser?user=${ name }&id=${ id }`;
-            this.$axios.get(url).then(r => {
-                this.ajaxCallback(r.data, this.searchUser.bind(this, name, id), () => {
-                    this.data = r.data.users;
-                });
-            }).catch((err) => {
-                console.log(err)
-            });
-        },
-        invite(row) {
-            this.$axios
-                .post('/api/user/guild/invite', {
-                    userName: row.name
-                })
-                .then(r => {
-                    this.ajaxCallback(r.data, this.invite.bind(this, row), () => {
-                    });
-                }).catch((err) => {
-                console.log(err)
-            });
-        }
     }
 });
 </script>

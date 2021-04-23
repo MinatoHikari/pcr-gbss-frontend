@@ -15,7 +15,7 @@ export default defineComponent({
     },
     mounted() {
         this.ws = new WebSocket('ws://localhost:9000/user/ping');
-        this.ws.onmessage = e => {
+        this.ws.onmessage = (e) => {
             console.log(e);
         };
     },

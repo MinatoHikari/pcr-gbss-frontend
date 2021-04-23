@@ -37,8 +37,8 @@
                 </q-card-section>
 
                 <q-card-actions align="right">
-                    <q-btn flat label="取消" color="primary" v-close-popup/>
-                    <q-btn label="确定" color="red" @click="dismiss" v-close-popup/>
+                    <q-btn flat label="取消" color="primary" v-close-popup />
+                    <q-btn label="确定" color="red" @click="dismiss" v-close-popup />
                 </q-card-actions>
             </q-card>
         </q-dialog>
@@ -47,36 +47,73 @@
 
 <script lang="ts">
 import useRequests from '../../../compositions/useRequest';
-import { defineComponent } from 'vue';
+import { computed, defineComponent, ref } from 'vue';
+import { Store } from 'vuex';
+import { MainState, useStore } from 'src/store';
+import { User } from 'src/models/user';
+import { guildRequests } from 'src/requests/guild';
+import useUtils from 'src/compositions/useUtils';
+
+type Props = { row: User; rowIndex: number };
 
 export default defineComponent({
     name: 'Guild-members',
-    preFetch({ store, redirect }) {
+    preFetch({ store }) {
         return store.dispatch('user/fetchGuildMembers', {
-            guildName: store.state.user.user.guild,
-            redirect
+            guildName: (store as Store<MainState>).state.user.user.guild
         });
     },
-    computed: {
-        tableData() {
-            return this.$store.state.user.guildMembers;
-        },
-        user() {
-            return this.$store.state.user.user;
-        }
+    setup() {
+        const store = useStore();
+        const { jobFilter } = useUtils();
+
+        const { ajaxCallback } = useRequests();
+        const tableData = computed(() => store.state.user.guildMembers);
+        const user = computed(() => store.state.user.user);
+
+        const confirm = ref(false);
+        const currentConfirmProps = ref('' as '' | Props);
+
+        const dismiss = async () => {
+            const { res, err } = await guildRequests.dismiss(
+                (currentConfirmProps.value as Props).row.name
+            );
+            if (err) console.log(err);
+            if (res) {
+                ajaxCallback(res.data, res.config, () => {
+                    let arr: User[] = [];
+                    arr = arr.concat(tableData.value);
+                    arr.splice((currentConfirmProps.value as Props).rowIndex, 1);
+                    store.commit('user/updateGuildMembers', arr);
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
+        };
+
+        const handleDismiss = (props: Props) => {
+            confirm.value = true;
+            currentConfirmProps.value = props;
+        };
+
+        return {
+            tableData,
+            user,
+            jobFilter,
+            dismiss,
+            handleDismiss
+        };
     },
     data() {
         return {
-            confirm: false,
-            currentConfirmProps: '',
             columns: [
                 {
                     name: 'name',
                     required: true,
                     label: '成员名称',
                     align: 'left',
-                    field: row => row.name,
-                    format: (val: string) => `${ val }`,
+                    field: (row: User) => row.name,
+                    format: (val: string) => `${val}`,
                     sortable: true
                 },
                 {
@@ -95,7 +132,7 @@ export default defineComponent({
                     name: 'job',
                     label: '职能',
                     field: 'job',
-                    format: this.jobFormat
+                    format: this.jobFilter
                 },
                 {
                     name: 'actions',
@@ -105,38 +142,6 @@ export default defineComponent({
                 }
             ]
         };
-    },
-    methods: {
-        handleDismiss(props) {
-            this.confirm = true;
-            this.currentConfirmProps = props;
-        },
-        dismiss() {
-            this.$axios
-                .post('/api/user/guild/dismiss', {
-                    member: this.currentConfirmProps.row.name
-                })
-                .then(r => {
-                    this.ajaxCallback(r.data, this.dismiss, () => {
-                        let arr = [];
-                        arr = arr.concat(this.tableData);
-                        arr.splice(this.currentConfirmProps.rowIndex, 1);
-                        this.$store.commit('user/updateGuildMembers', arr);
-                    });
-                }).catch((err) => {
-                console.log(err)
-            });
-        },
-        jobFormat(val: string) {
-            switch (val) {
-                case 'master':
-                    return '会长';
-                case 'submaster':
-                    return '副会长';
-                case 'employed':
-                    return '会员';
-            }
-        }
     }
 });
 </script>
