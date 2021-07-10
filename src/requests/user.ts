@@ -22,7 +22,15 @@ interface UserRequests {
 
 export const userRequests: UserRequests = {
     searchUser: (name, ID) => {
-        return req(axios.get(`/api/public/getUser?user=${name}&id=${ID}`), true);
+        return req(
+            axios.get('/api/public/getUser', {
+                params: {
+                    user: name,
+                    id: ID
+                }
+            }),
+            true
+        );
     },
     invite: (name) => {
         return req(
@@ -74,7 +82,12 @@ export const userRequests: UserRequests = {
     },
     fetchMyBattleOrder: (round) => {
         return req(
-            axios.get(`/api/user/battle/searchOrder?round=${round}&bossNum=all&user=my`, {
+            axios.get('/api/user/battle/searchOrder', {
+                params: {
+                    round,
+                    bossNum: 'all',
+                    user: 'my'
+                },
                 headers: {
                     Authorization: `Bearer ${LocalStorage.getItem('JWT-token') as string}`
                 }

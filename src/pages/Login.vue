@@ -1,12 +1,6 @@
 <template>
     <q-page class="flex flex-center relative">
-        <q-btn
-            to="/"
-            class="absolute btn-back q-ma-md"
-            round
-            color="info"
-            icon="keyboard_return"
-        />
+        <q-btn to="/" class="absolute btn-back q-ma-md" round color="info" icon="keyboard_return" />
         <div class="column">
             <div class="col">
                 <q-card>
@@ -71,10 +65,11 @@
 import { required, email } from '@vuelidate/validators';
 import { useVuelidate } from '@vuelidate/core';
 import useAjaxCallback from '../compositions/useRequest';
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, Ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { authRequests } from 'src/requests/auth';
+import { useVDR } from 'v-demi-request';
 
 export default defineComponent({
     name: 'Login',

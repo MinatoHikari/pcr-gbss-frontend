@@ -70,13 +70,25 @@ export const authRequests: AuthRequests = {
         return req(axios.get('/api/public/getCaptcha'));
     },
     refreshCaptcha: (id) => {
-        return req(axios.get(`/api/public/refreshCaptcha?id=${id}`));
+        return req(
+            axios.get('/api/public/refreshCaptcha', {
+                params: {
+                    id
+                }
+            })
+        );
     },
     sendAddressVerifyMail: (email) => {
-        return req(axios.get(`/api/user/sendRegisterVerifyEmail?email=${email}`));
+        return req(axios.get('/api/user/sendRegisterVerifyEmail', { params: { email } }));
     },
     sendPasswordResetMail: (email) => {
-        return req(axios.get(`/api/user/sendPasswordResetMail?email=${email}`));
+        return req(
+            axios.get('/api/user/sendPasswordResetMail', {
+                params: {
+                    email
+                }
+            })
+        );
     },
     verifyCaptcha: (id, digitalStr) => {
         return req(

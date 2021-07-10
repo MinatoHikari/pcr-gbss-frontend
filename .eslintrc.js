@@ -61,6 +61,7 @@ module.exports = {
         // allow paren-less arrow functions
         'arrow-parens': 'off',
         'one-var': 'off',
+        'no-unused-vars': 'off',
         quotes: ['warn', 'single'],
         'import/first': 'off',
         'import/named': 'error',
@@ -81,6 +82,7 @@ module.exports = {
         '@typescript-eslint/no-unsafe-assignment': 'off',
         '@typescript-eslint/no-unsafe-return': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
 
         // allow debugger during development only
         'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'

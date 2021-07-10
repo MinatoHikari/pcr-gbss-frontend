@@ -73,8 +73,6 @@ export default defineComponent({
         return store.dispatch('user/fetchGuildApplications', redirect);
     },
     setup(prop, context) {
-        console.log(prop);
-        console.log(context);
         const { ajaxCallback } = useRequests();
         const store = useStore();
 

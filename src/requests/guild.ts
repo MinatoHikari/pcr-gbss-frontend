@@ -88,7 +88,7 @@ type BattleRequests = {
 
 export const guildRequests: GuildRequests = {
     fetchGuild: (guild) => {
-        return req(axios.get(`/api/public/getGuild?guild=${guild}`), false);
+        return req(axios.get('/api/public/getGuild?', { params: { guild } }), false);
     },
     rejectApply: (userName, guild, type) => {
         return req(
@@ -111,7 +111,15 @@ export const guildRequests: GuildRequests = {
         );
     },
     searchGuild: (name, id) => {
-        return req(axios.get(`/api/public/getGuild?guild=${name}&id=${id}`), true);
+        return req(
+            axios.get('/api/public/getGuild', {
+                params: {
+                    guild: name,
+                    id
+                }
+            }),
+            true
+        );
     },
     joinGuild: (guild) => {
         return req(
@@ -161,7 +169,14 @@ export const guildRequests: GuildRequests = {
         );
     },
     fetchGuildMembers: (guildName) => {
-        return req(axios.get(`/api/public/getGuildMembers?guild=${guildName}`), true);
+        return req(
+            axios.get('/api/public/getGuildMembers', {
+                params: {
+                    guild: guildName
+                }
+            }),
+            true
+        );
     },
     fetchGuildApplications: () => {
         return req(
@@ -175,9 +190,12 @@ export const guildRequests: GuildRequests = {
     },
     fetchUserApplications: (userName) => {
         return req(
-            axios.get(`/api/user/status/getUserApplications?user=${userName}`, {
+            axios.get('/api/user/status/getUserApplications', {
                 headers: {
                     Authorization: `Bearer ${LocalStorage.getItem('JWT-token') as string}`
+                },
+                params: {
+                    user: userName
                 }
             }),
             true
@@ -197,16 +215,20 @@ export const guildRequests: GuildRequests = {
 
 export const battleRequests: BattleRequests = {
     updateBattleRecords: (records, after = true) => {
-        let url;
         if (records.length === 0) {
-            url = '/api/user/battle/getBattleRecords';
+            return req(axios.get('/api/user/battle/getBattleRecords'), true);
         } else {
-            url = `/api/user/battle/getBattleRecords?time=${
-                after ? records[0].createdAt : records[records.length - 1].createdAt
-            }${after ? '&type=after' : ''}`.replace('+', '%2B');
+            return req(
+                axios.get('/api/user/battle/getBattleRecords', {
+                    params: {
+                        time: `${
+                            after ? records[0].createdAt : records[records.length - 1].createdAt
+                        }${after ? '&type=after' : ''}`.replace('+', '%2B')
+                    }
+                }),
+                true
+            );
         }
-
-        return req(axios.get(url), true);
     },
     orderBoss: (round, bossNum) => {
         return req(
@@ -219,7 +241,12 @@ export const battleRequests: BattleRequests = {
     },
     searchOrder: (round, bossNum) => {
         return req(
-            axios.get(`/api/user/battle/searchOrder?round=${round}&bossNum=${bossNum}`),
+            axios.get('/api/user/battle/searchOrder', {
+                params: {
+                    round,
+                    bossNum
+                }
+            }),
             true
         );
     },
@@ -233,7 +260,14 @@ export const battleRequests: BattleRequests = {
         );
     },
     enterIn: (guild) => {
-        return req(axios.get(`/api/user/battle/enterIn?guild=${guild}`), true);
+        return req(
+            axios.get('/api/user/battle/enterIn', {
+                params: {
+                    guild
+                }
+            }),
+            true
+        );
     },
     clear: (damage) => {
         return req(
@@ -244,7 +278,7 @@ export const battleRequests: BattleRequests = {
         );
     },
     unlock: (guild) => {
-        return req(axios.get(`/api/user/battle/unlock?guild=${guild}`), true);
+        return req(axios.get('/api/user/battle/unlock', { params: { guild } }), true);
     },
     hangUp: () => {
         return req(axios.get('/api/user/battle/hangUp'), true);
